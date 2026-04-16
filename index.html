@@ -434,13 +434,71 @@ function renderTruckGrid(){
   const arr=cache.caminhoes;
   document.getElementById('frota-count').textContent=arr.length+' caminhão'+(arr.length!==1?'ões':'');
   if(!arr.length){g.innerHTML='<div class="empty">Nenhum caminhão cadastrado.</div>';return;}
-  g.innerHTML=arr.map((cam,i)=>`
+  g.innerHTML=`
+    <div class="truck-card" id="card-todos" onclick="abrirTodosOsCaminhoes()">
+      <div class="truck-icon"><span style="font-size:26px">🚛</span></div>
+      <div class="truck-plate">Todos</div>
+      <div class="truck-sub">Todas as viagens</div>
+    </div>`+arr.map((cam,i)=>`
     <div class="truck-card" onclick="openModal(${i})">
       <div class="truck-icon">${marcaIcon(cam.marca)}</div>
       <div class="truck-plate">${cam.placa}</div>
       <div class="truck-sub">${cam.marca?cam.marca+' — ':''} ${cam.modelo||'—'}</div>
       <div style="margin-top:6px;font-size:11px;color:#aaa">${[cam.ano,cam.cor].filter(Boolean).join(' · ')}</div>
     </div>`).join('');
+}
+
+async function abrirTodosOsCaminhoes(){
+  currentTruck=null;
+  document.getElementById('frota-painel-titulo').textContent='Todas as viagens';
+  document.getElementById('frota-painel-sub').textContent='Todos os caminhões';
+  document.querySelectorAll('.truck-card').forEach(c=>c.classList.remove('selected-truck'));
+  document.getElementById('card-todos').classList.add('selected-truck');
+  document.getElementById('frota-painel').style.display='block';
+  document.getElementById('frota-painel').scrollIntoView({behavior:'smooth',block:'nearest'});
+  // Esconde botão adicionar viagem (sem caminhão selecionado)
+  document.querySelector('#frota-painel .btn-primary').style.display='none';
+  const el=document.getElementById('frota-trips');
+  el.innerHTML='<div class="loading">Carregando viagens...</div>';
+  try{
+    const viagens=await db('viagens','GET',null,'?order=data.desc')||[];
+    const fmt=n=>'R$ '+(n||0).toFixed(2).replace('.',',');
+    const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
+    const sumComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
+    const sumAb=viagens.reduce((a,v)=>a+(v.abastecimento||0),0);
+    document.getElementById('frota-summary').innerHTML=`
+      <div class="summary-card"><div class="summary-label">Total viagens</div><div class="summary-value">${viagens.length}</div></div>
+      <div class="summary-card"><div class="summary-label">Frete total</div><div class="summary-value" style="font-size:15px">${fmt(sumFrete)}</div></div>
+      <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
+      <div class="summary-card"><div class="summary-label">Abastecimento</div><div class="summary-value" style="font-size:15px">${fmt(sumAb)}</div></div>
+    `;
+    if(!viagens.length){el.innerHTML='<div class="empty" style="padding:1.5rem 0">Nenhuma viagem registrada.</div>';return;}
+    const placas={};
+    cache.caminhoes.forEach(c=>placas[c.id]=c.placa);
+    el.innerHTML=`<div class="table-scroll"><table class="trip-table">
+      <thead><tr>
+        <th>Caminhão</th><th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
+      </tr></thead>
+      <tbody>${viagens.map(v=>`<tr>
+        <td><strong>${placas[v.caminhao_id]||'—'}</strong></td>
+        <td>${v.data||'—'}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
+        <td>${v.loc_carga||'—'}</td><td>${v.loc_dev||'—'}</td><td>${v.container||'—'}</td><td>${v.bug||'—'}</td>
+        <td>${v.motorista||'—'}</td>
+        <td>${fmt(v.frete)}</td><td>${fmt(v.comissao)}</td><td>${fmt(v.abastecimento)}</td>
+        <td>${v.litros||0} L</td><td>${v.obs||'—'}</td>
+        <td><button class="btn-danger" onclick="removerViagemTodos('${v.id}')">&#x2715;</button></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  }catch(e){el.innerHTML='<div class="empty">Erro ao carregar viagens.</div>';}
+}
+
+async function removerViagemTodos(id){
+  if(!confirm('Remover esta viagem?')) return;
+  try{
+    await db('viagens','DELETE',null,`?id=eq.${id}`);
+    await abrirTodosOsCaminhoes();
+    toast('Viagem removida.');
+  }catch(e){toast('Erro ao remover viagem.',true);}
 }
 
 function renderListaCaminhoes(){
@@ -740,8 +798,8 @@ async function openModal(idx){
   currentTruck=cache.caminhoes[idx];
   document.getElementById('frota-painel-titulo').textContent='Caminhão '+currentTruck.placa;
   document.getElementById('frota-painel-sub').textContent=currentTruck.modelo||'';
-  // Destaca card selecionado
-  document.querySelectorAll('.truck-card').forEach((c,i)=>c.classList.toggle('selected-truck',i===idx));
+  document.querySelectorAll('.truck-card').forEach((c,i)=>c.classList.toggle('selected-truck',i===idx+1)); // +1 por causa do card "Todos"
+  document.querySelector('#frota-painel .btn-primary').style.display='';
   populateSelects();
   document.getElementById('frota-painel').style.display='block';
   document.getElementById('frota-painel').scrollIntoView({behavior:'smooth',block:'nearest'});

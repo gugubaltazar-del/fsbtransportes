@@ -54,7 +54,10 @@ body.dark .marca-opt.selected{border-color:#e04548;background:#2a1515;color:#e04
 .truck-sub{font-size:12px;color:#888;margin-top:2px}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto}
 .modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:12px;padding:1.5rem;width:min(98vw,900px);border:1px solid #e8e5de;margin:auto;overflow:hidden}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:min(98vw,900px);border:1px solid #e8e5de;margin:auto}
+.modal-inner-scroll{overflow-x:auto;margin:0 -1.5rem;padding:0 1.5rem}
+.modal-inner-scroll::-webkit-scrollbar{height:0}
+.modal-inner-scroll{scrollbar-width:none;-ms-overflow-style:none}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
 .modal-title{font-size:16px;font-weight:700}
 .close-btn{background:none;border:none;cursor:pointer;font-size:20px;color:#888;line-height:1;padding:2px 6px;border-radius:5px}
@@ -816,12 +819,11 @@ async function renderModalTrips(){
       <div class="summary-card"><div class="summary-label">Frete total</div><div class="summary-value" style="font-size:15px">${fmt(sumFrete)}</div></div>
       <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
       <div class="summary-card"><div class="summary-label">Abastecimento</div><div class="summary-value" style="font-size:15px">${fmt(sumAb)}</div></div>
-      <div class="summary-card"><div class="summary-label">Litros total</div><div class="summary-value">${sumLitros.toFixed(0)} L</div></div>
     `;
     if(!viagens.length){el.innerHTML='<div class="empty">Nenhuma viagem registrada.</div>';return;}
-    el.innerHTML=`<div class="table-scroll"><table class="trip-table">
+    el.innerHTML=`<div class="modal-inner-scroll"><table class="trip-table">
       <thead><tr>
-        <th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
+        <th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Obs.</th><th></th>
       </tr></thead>
       <tbody>${viagens.map(v=>`<tr>
         <td>${v.data||'—'}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
@@ -830,7 +832,7 @@ async function renderModalTrips(){
         <td>R$ ${(v.frete||0).toFixed(2).replace('.',',')}</td>
         <td>R$ ${(v.comissao||0).toFixed(2).replace('.',',')}</td>
         <td>R$ ${(v.abastecimento||0).toFixed(2).replace('.',',')}</td>
-        <td>${v.litros||0} L</td><td>${v.obs||'—'}</td>
+        <td>${v.obs||'—'}</td>
         <td style="display:flex;gap:4px">
           <button class="btn-danger" style="color:#C8171A" onclick="editarViagem('${v.id}')">✎</button>
           <button class="btn-danger" onclick="removerViagem('${v.id}')">&#x2715;</button>
@@ -907,9 +909,9 @@ async function loadTodasViagens(){
     const fmt=n=>'R$ '+(n||0).toFixed(2).replace('.',',');
     const placas={};
     cache.caminhoes.forEach(c=>placas[c.id]=c.placa);
-    el.innerHTML=`<div class="table-scroll"><table class="trip-table">
+    el.innerHTML=`<div class="modal-inner-scroll"><table class="trip-table">
       <thead><tr>
-        <th>Caminhão</th><th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
+        <th>Caminhão</th><th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Obs.</th><th></th>
       </tr></thead>
       <tbody>${viagens.map(v=>`<tr>
         <td><strong>${placas[v.caminhao_id]||'—'}</strong></td>
@@ -917,7 +919,7 @@ async function loadTodasViagens(){
         <td>${v.loc_carga||'—'}</td><td>${v.loc_dev||'—'}</td><td>${v.container||'—'}</td><td>${v.bug||'—'}</td>
         <td>${v.motorista||'—'}</td>
         <td>${fmt(v.frete)}</td><td>${fmt(v.comissao)}</td><td>${fmt(v.abastecimento)}</td>
-        <td>${v.litros||0} L</td><td>${v.obs||'—'}</td>
+        <td>${v.obs||'—'}</td>
         <td><button class="btn-danger" onclick="removerViagemGeral('${v.id}')">&#x2715;</button></td>
       </tr>`).join('')}</tbody>
     </table></div>`;

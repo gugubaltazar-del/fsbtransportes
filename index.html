@@ -41,7 +41,10 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
 .truck-icon{height:36px;margin-bottom:8px;display:flex;align-items:center;justify-content:center}
 .truck-icon img{max-height:36px;max-width:80px;object-fit:contain}
 .marca-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border:1.5px solid #e0ddd5;border-radius:8px;cursor:pointer;font-size:11px;color:#888;min-width:72px;transition:all .15s}
-.marca-opt img{height:28px;width:auto;object-fit:contain}
+.marca-opt img{height:28px;width:auto;object-fit:contain;mix-blend-mode:multiply}
+body.dark .marca-opt img{mix-blend-mode:screen}
+.truck-icon img{mix-blend-mode:multiply}
+body.dark .truck-icon img{mix-blend-mode:screen}
 .marca-opt:hover{border-color:#C8171A;color:#1a1a1a}
 .marca-opt.selected{border-color:#C8171A;background:#fff5f5;color:#C8171A;font-weight:600}
 body.dark .marca-opt{border-color:#2e2f31;color:#888}

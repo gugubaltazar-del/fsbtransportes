@@ -245,7 +245,7 @@ async function db(table,method='GET',body=null,query=''){
     'apikey':SUPA_KEY,
     'Authorization':'Bearer '+SUPA_KEY,
     'Content-Type':'application/json',
-    'Prefer':method==='DELETE'?'return=minimal':'return=representation'
+    'Prefer':(method==='DELETE'||method==='PATCH')?'return=minimal':'return=representation'
   };
   const res=await fetch(url,{method,headers,body:body?JSON.stringify(body):null});
   if(!res.ok){const e=await res.text();throw new Error(e);}
@@ -283,6 +283,8 @@ function openFormModal(tipo){
 function closeFormModal(){
   document.getElementById('form-modal').classList.remove('open');
   document.body.style.overflow='';
+  editandoCaminhaoId=null;
+  document.getElementById('btn-salvar-caminhao').textContent='Salvar caminhão';
 }
 
 // ── CAMINHÕES ──
@@ -318,8 +320,31 @@ function renderListaCaminhoes(){
         <div style="font-weight:500">${c.placa} <span style="font-weight:400;color:#888">— ${c.modelo||'—'}</span></div>
         <div style="font-size:11px;color:#aaa">${[c.cor,c.ano,c.renavam?'Renavam: '+c.renavam:'',c.antt?'ANTT: '+c.antt:''].filter(Boolean).join(' · ')}</div>
       </div>
-      <button class="btn-danger" onclick="removerCaminhao('${c.id}')">Remover</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn-primary" style="font-size:12px;padding:4px 10px" onclick="editarCaminhao('${c.id}')">Editar</button>
+        <button class="btn-danger" onclick="removerCaminhao('${c.id}')">Remover</button>
+      </div>
     </div>`).join('');
+}
+
+let editandoCaminhaoId=null;
+
+function editarCaminhao(id){
+  const c=cache.caminhoes.find(x=>x.id===id);
+  if(!c) return;
+  editandoCaminhaoId=id;
+  document.getElementById('c-placa').value=c.placa||'';
+  document.getElementById('c-modelo').value=c.modelo||'';
+  document.getElementById('c-cor').value=c.cor||'';
+  document.getElementById('c-ano').value=c.ano||'';
+  document.getElementById('c-renavam').value=c.renavam||'';
+  document.getElementById('c-antt').value=c.antt||'';
+  document.getElementById('form-modal-title').textContent='Editar caminhão';
+  document.getElementById('btn-salvar-caminhao').textContent='Atualizar caminhão';
+  ['caminhao','motorista','empresa','carreta'].forEach(t=>document.getElementById('form-'+t).style.display='none');
+  document.getElementById('form-caminhao').style.display='block';
+  document.getElementById('form-modal').classList.add('open');
+  document.body.style.overflow='hidden';
 }
 
 async function salvarCaminhao(){
@@ -327,19 +352,26 @@ async function salvarCaminhao(){
   if(!placa) return toast('Informe a placa.',true);
   const btn=document.getElementById('btn-salvar-caminhao');
   btn.disabled=true; btn.textContent='Salvando...';
+  const body={
+    placa,
+    modelo:document.getElementById('c-modelo').value.trim(),
+    cor:document.getElementById('c-cor').value.trim(),
+    ano:document.getElementById('c-ano').value.trim(),
+    renavam:document.getElementById('c-renavam').value.trim(),
+    antt:document.getElementById('c-antt').value.trim()
+  };
   try{
-    await db('caminhoes','POST',{
-      placa,
-      modelo:document.getElementById('c-modelo').value.trim(),
-      cor:document.getElementById('c-cor').value.trim(),
-      ano:document.getElementById('c-ano').value.trim(),
-      renavam:document.getElementById('c-renavam').value.trim(),
-      antt:document.getElementById('c-antt').value.trim()
-    });
+    if(editandoCaminhaoId){
+      await db('caminhoes','PATCH',body,`?id=eq.${editandoCaminhaoId}`);
+      editandoCaminhaoId=null;
+      toast('Caminhão atualizado!');
+    } else {
+      await db('caminhoes','POST',body);
+      toast('Caminhão salvo!');
+    }
     ['c-placa','c-modelo','c-cor','c-ano','c-renavam','c-antt'].forEach(f=>document.getElementById(f).value='');
     await loadCaminhoes();
     closeFormModal();
-    toast('Caminhão salvo!');
   }catch(e){toast('Erro ao salvar caminhão.',true);}
   finally{btn.disabled=false; btn.textContent='Salvar caminhão';}
 }

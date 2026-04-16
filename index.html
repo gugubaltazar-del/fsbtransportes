@@ -705,7 +705,28 @@ async function removerViagemGeral(id){
   }catch(e){toast('Erro ao remover viagem.',true);}
 }
 
+async function syncSilencioso(){
+  try{
+    const [caminhoes,motoristas,empresas,carretas]=await Promise.all([
+      db('caminhoes','GET',null,'?order=created_at.asc'),
+      db('motoristas','GET',null,'?order=created_at.asc'),
+      db('empresas','GET',null,'?order=created_at.asc'),
+      db('carretas','GET',null,'?order=created_at.asc'),
+    ]);
+    cache.caminhoes=caminhoes||[];
+    cache.motoristas=motoristas||[];
+    cache.empresas=empresas||[];
+    cache.carretas=carretas||[];
+    renderTruckGrid();
+    renderListaCaminhoes();
+    renderMotoristas();
+    renderEmpresas();
+    renderCarretas();
+  }catch(e){}
+}
+
 Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]);
+setInterval(syncSilencioso, 5000);
 </script>
 </body>
 </html>

@@ -1019,7 +1019,7 @@ async function syncSilencioso(){
   }catch(e){}
 }
 
-Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]);
+Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]).then(()=>abrirTodosOsCaminhoes());
 setInterval(syncSilencioso, 5000);
 
 function toggleDark(){

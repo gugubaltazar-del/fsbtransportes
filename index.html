@@ -956,8 +956,6 @@ function editarViagem(id){
   editandoViagemId=id;
   document.getElementById('viagem-modal-title').textContent='Editar viagem';
   document.getElementById('btn-salvar-viagem').textContent='Salvar alterações';
-  const cb=document.getElementById('v-comissao-auto');
-  cb.checked=true; toggleComissaoAuto(cb);
   populateSelects();
   document.getElementById('v-data').value=v.data||'';
   document.getElementById('v-empresa').value=v.empresa||'';
@@ -969,10 +967,12 @@ function editarViagem(id){
   document.getElementById('v-container').value=v.container||"40'";
   document.getElementById('v-bug').value=v.bug||'';
   document.getElementById('v-frete').value=v.frete||0;
-  document.getElementById('v-comissao').value=v.comissao||0;
   document.getElementById('v-abastecimento').value=v.abastecimento||0;
   document.getElementById('v-litros').value=v.litros||0;
   document.getElementById('v-obs').value=v.obs||'';
+  // ativa auto e recalcula com o frete preenchido
+  const cb=document.getElementById('v-comissao-auto');
+  cb.checked=true; toggleComissaoAuto(cb); calcComissaoAuto();
   document.getElementById('viagem-modal').classList.add('open');
 }
 

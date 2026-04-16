@@ -61,6 +61,47 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
 .toast.show{opacity:1}
 .toast.error{background:#a32d2d}
 @media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.truck-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+
+/* Dark mode toggle button */
+#dark-toggle{position:fixed;bottom:1.25rem;left:1.25rem;z-index:9998;width:38px;height:38px;border-radius:50%;border:1px solid #e0ddd5;background:#fff;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:background .2s,border-color .2s}
+#dark-toggle:hover{background:#f0ede5}
+
+/* Dark mode styles */
+body.dark{background:#111213;color:#e8e6e0}
+body.dark .card{background:#1c1d1f;border-color:#2e2f31}
+body.dark .card-title{color:#e8e6e0}
+body.dark .nav{border-bottom-color:#2e2f31}
+body.dark .nav-btn{color:#888}
+body.dark .nav-btn:hover{color:#e8e6e0;background:#252628}
+body.dark .nav-btn.active{color:#e8e6e0;border-bottom-color:#7c6ad6}
+body.dark .field input,body.dark .field select,body.dark .field textarea{background:#252628;border-color:#3a3b3e;color:#e8e6e0}
+body.dark .field input:focus,body.dark .field select:focus,body.dark .field textarea:focus{border-color:#7c6ad6}
+body.dark .field label{color:#999}
+body.dark .list-item{border-bottom-color:#2e2f31}
+body.dark .badge{background:#252628;color:#aaa}
+body.dark .truck-card{background:#1c1d1f;border-color:#2e2f31;color:#e8e6e0}
+body.dark .truck-card:hover{border-color:#7c6ad6}
+body.dark .truck-sub{color:#888}
+body.dark .modal{background:#1c1d1f;border-color:#2e2f31}
+body.dark .modal-title{color:#e8e6e0}
+body.dark .close-btn{color:#888}
+body.dark .close-btn:hover{background:#252628;color:#e8e6e0}
+body.dark .trip-table th{background:#252628;color:#888;border-bottom-color:#2e2f31}
+body.dark .trip-table td{border-bottom-color:#2e2f31;color:#e8e6e0}
+body.dark .trip-table tr:hover td{background:#222426}
+body.dark .summary-card{background:#252628}
+body.dark .summary-label{color:#888}
+body.dark .btn-danger{border-color:#3a3b3e;color:#d46b6b}
+body.dark .btn-danger:hover{background:#2e1f1f;border-color:#7a3333}
+body.dark .section-header{color:#e8e6e0}
+body.dark .empty,.dark .loading{color:#666}
+body.dark #login-screen{background:#111213}
+body.dark #login-screen>div{background:#1c1d1f;border-color:#2e2f31}
+body.dark #login-screen input{background:#252628;border-color:#3a3b3e;color:#e8e6e0}
+body.dark #dark-toggle{background:#1c1d1f;border-color:#2e2f31;color:#e8e6e0}
+body.dark #dark-toggle:hover{background:#252628}
+body.dark h1,body.dark .subtitle{color:#e8e6e0}
+body.dark .subtitle{color:#888}
 </style>
 </head>
 <body>
@@ -272,6 +313,8 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
     <button class="btn-primary" id="btn-salvar-viagem" onclick="salvarViagem()">Adicionar viagem</button>
   </div>
 </div>
+
+<button id="dark-toggle" onclick="toggleDark()" title="Alternar modo escuro">🌙</button>
 
 <div class="toast" id="toast"></div>
 
@@ -767,6 +810,19 @@ async function syncSilencioso(){
 
 Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]);
 setInterval(syncSilencioso, 5000);
+
+function toggleDark(){
+  const dark=document.body.classList.toggle('dark');
+  document.getElementById('dark-toggle').textContent=dark?'☀️':'🌙';
+  localStorage.setItem('fsb_dark',dark?'1':'0');
+}
+
+(function initDark(){
+  if(localStorage.getItem('fsb_dark')==='1'){
+    document.body.classList.add('dark');
+    document.getElementById('dark-toggle').textContent='☀️';
+  }
+})();
 
 const SENHA_CORRETA = 'fstgobccrb';
 

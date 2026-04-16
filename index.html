@@ -3,17 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Transportadora</title>
+<title>FSB Transportes</title>
+<link rel="icon" type="image/png" href="logo.png" />
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#1a1a1a;background:#f5f4f0;min-height:100vh}
 .app{max-width:1100px;margin:0 auto;padding:1.25rem}
 h1{font-size:20px;font-weight:600;margin-bottom:2px}
+.app-header{display:flex;align-items:center;gap:12px;margin-bottom:1.25rem}
+.app-header img{height:44px;width:auto}
 .subtitle{font-size:12px;color:#888;margin-bottom:1.25rem}
 .nav{display:flex;gap:4px;border-bottom:1.5px solid #e0ddd5;margin-bottom:1.5rem;flex-wrap:wrap}
 .nav-btn{padding:8px 16px;border:none;background:none;cursor:pointer;font-size:13px;color:#888;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;border-radius:4px 4px 0 0;transition:all .15s}
 .nav-btn:hover{color:#1a1a1a;background:#edebe5}
-.nav-btn.active{color:#1a1a1a;border-bottom:2.5px solid #533AB7;font-weight:600}
+.nav-btn.active{color:#1a1a1a;border-bottom:2.5px solid #C8171A;font-weight:600}
 .tab{display:none}.tab.active{display:block}
 .card{background:#fff;border:1px solid #e8e5de;border-radius:10px;padding:1.25rem;margin-bottom:1rem}
 .card-title{font-size:14px;font-weight:600;margin-bottom:1rem;color:#1a1a1a}
@@ -22,10 +25,10 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
 .field{display:flex;flex-direction:column;gap:4px}
 .field label{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.4px}
 .field input,.field select,.field textarea{padding:7px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#1a1a1a;font-size:13px;font-family:inherit;outline:none;transition:border .15s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:#533AB7}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#C8171A}
 .field textarea{resize:vertical;min-height:64px}
-.btn-primary{padding:8px 18px;background:#533AB7;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600}
-.btn-primary:hover{background:#3C2489}
+.btn-primary{padding:8px 18px;background:#C8171A;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600}
+.btn-primary:hover{background:#a01215}
 .btn-primary:disabled{background:#aaa;cursor:not-allowed}
 .btn-danger{padding:4px 9px;background:none;border:1px solid #ddd;border-radius:5px;cursor:pointer;font-size:12px;color:#a32d2d}
 .btn-danger:hover{background:#fcebeb;border-color:#f09595}
@@ -34,7 +37,7 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
 .badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:#f0ede5;color:#666}
 .truck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .truck-card{background:#fff;border:1px solid #e8e5de;border-radius:10px;padding:1rem;cursor:pointer;transition:all .15s;text-align:center}
-.truck-card:hover{border-color:#533AB7;box-shadow:0 2px 8px rgba(83,58,183,.1)}
+.truck-card:hover{border-color:#C8171A;box-shadow:0 2px 8px rgba(83,58,183,.1)}
 .truck-icon{font-size:30px;margin-bottom:8px}
 .truck-plate{font-size:15px;font-weight:700;letter-spacing:1px}
 .truck-sub{font-size:12px;color:#888;margin-top:2px}
@@ -73,14 +76,14 @@ body.dark .card-title{color:#e8e6e0}
 body.dark .nav{border-bottom-color:#2e2f31}
 body.dark .nav-btn{color:#888}
 body.dark .nav-btn:hover{color:#e8e6e0;background:#252628}
-body.dark .nav-btn.active{color:#e8e6e0;border-bottom-color:#7c6ad6}
+body.dark .nav-btn.active{color:#e8e6e0;border-bottom-color:#e04548}
 body.dark .field input,body.dark .field select,body.dark .field textarea{background:#252628;border-color:#3a3b3e;color:#e8e6e0}
-body.dark .field input:focus,body.dark .field select:focus,body.dark .field textarea:focus{border-color:#7c6ad6}
+body.dark .field input:focus,body.dark .field select:focus,body.dark .field textarea:focus{border-color:#e04548}
 body.dark .field label{color:#999}
 body.dark .list-item{border-bottom-color:#2e2f31}
 body.dark .badge{background:#252628;color:#aaa}
 body.dark .truck-card{background:#1c1d1f;border-color:#2e2f31;color:#e8e6e0}
-body.dark .truck-card:hover{border-color:#7c6ad6}
+body.dark .truck-card:hover{border-color:#e04548}
 body.dark .truck-sub{color:#888}
 body.dark .modal{background:#1c1d1f;border-color:#2e2f31}
 body.dark .modal-title{color:#e8e6e0}
@@ -110,22 +113,27 @@ body.dark .subtitle{color:#888}
 <div id="login-screen" style="display:none;position:fixed;inset:0;background:#f5f4f0;z-index:9999;align-items:center;justify-content:center">
   <div style="background:#fff;border:1px solid #e8e5de;border-radius:12px;padding:2rem;width:min(90vw,360px);display:flex;flex-direction:column;gap:16px">
     <div style="text-align:center">
-      <div style="font-size:32px">🚛</div>
-      <div style="font-size:18px;font-weight:700;margin-top:8px">FSB Transportes</div>
+      <img src="logo.png" alt="FSB Transportes" style="height:56px;width:auto;margin-bottom:4px" />
+      <div style="font-size:18px;font-weight:700;margin-top:4px">FSB Transportes</div>
       <div style="font-size:13px;color:#888;margin-top:4px">Digite a senha para continuar</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <input id="login-input" type="password" placeholder="Senha" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')verificarSenha()" />
       <div id="login-erro" style="color:#a32d2d;font-size:12px;display:none">Senha incorreta.</div>
-      <button onclick="verificarSenha()" style="padding:10px;background:#533AB7;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">Entrar</button>
+      <button onclick="verificarSenha()" style="padding:10px;background:#C8171A;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">Entrar</button>
     </div>
   </div>
 </div>
 
 <div id="app-content" style="display:none">
 <div class="app">
-  <h1>🚛 Transportadora</h1>
-  <div class="subtitle">Gestão de frota, motoristas e viagens</div>
+  <div class="app-header">
+    <img src="logo.png" alt="FSB Transportes" />
+    <div>
+      <h1 style="margin-bottom:2px">FSB Transportes</h1>
+      <div class="subtitle" style="margin-bottom:0">Gestão de frota, motoristas e viagens</div>
+    </div>
+  </div>
   <div class="nav">
     <button class="nav-btn active" onclick="showTab('caminhoes',this)">Frota</button>
     <button class="nav-btn" onclick="showTab('cad-caminhao',this)">Caminhões</button>

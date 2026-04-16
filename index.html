@@ -454,7 +454,7 @@ function marcaIcon(marca){
 function renderTruckGrid(){
   const g=document.getElementById('truck-grid');
   const arr=cache.caminhoes;
-  document.getElementById('frota-count').textContent=arr.length+' caminhão'+(arr.length!==1?'ões':'');
+  document.getElementById('frota-count').textContent=arr.length+' '+(arr.length!==1?'caminhões':'caminhão');
   if(!arr.length){g.innerHTML='<div class="empty">Nenhum caminhão cadastrado.</div>';return;}
   g.innerHTML=`
     <div class="truck-card" id="card-todos" onclick="abrirTodosOsCaminhoes()">

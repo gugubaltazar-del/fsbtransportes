@@ -330,7 +330,7 @@ async function salvarCaminhao(){
   btn.disabled=true; btn.textContent='Salvando...';
   try{
     await db('caminhoes','POST',{
-      id:'c_'+Date.now(), placa,
+      placa,
       modelo:document.getElementById('c-modelo').value.trim(),
       cor:document.getElementById('c-cor').value.trim(),
       ano:document.getElementById('c-ano').value.trim(),
@@ -409,7 +409,7 @@ async function salvarMotorista(){
   }
   try{
     await db('motoristas','POST',{
-      id:'m_'+Date.now(), nome,
+      nome,
       cpf:document.getElementById('m-cpf').value.trim(),
       tel:document.getElementById('m-tel').value.trim(),
       nasc:document.getElementById('m-nasc').value,
@@ -460,7 +460,7 @@ async function salvarEmpresa(){
   const btn=document.getElementById('btn-salvar-empresa');
   btn.disabled=true; btn.textContent='Salvando...';
   try{
-    await db('empresas','POST',{id:'e_'+Date.now(),nome,cnpj:document.getElementById('e-cnpj').value.trim()});
+    await db('empresas','POST',{nome,cnpj:document.getElementById('e-cnpj').value.trim()});
     document.getElementById('e-nome').value='';
     document.getElementById('e-cnpj').value='';
     await loadEmpresas();
@@ -504,7 +504,7 @@ async function salvarCarreta(){
   const btn=document.getElementById('btn-salvar-carreta');
   btn.disabled=true; btn.textContent='Salvando...';
   try{
-    await db('carretas','POST',{id:'r_'+Date.now(),placa,descricao:document.getElementById('bug-desc').value.trim()});
+    await db('carretas','POST',{placa,descricao:document.getElementById('bug-desc').value.trim()});
     document.getElementById('bug-placa').value='';
     document.getElementById('bug-desc').value='';
     await loadCarretas();
@@ -552,7 +552,6 @@ async function salvarViagem(){
   btn.disabled=true; btn.textContent='Salvando...';
   try{
     await db('viagens','POST',{
-      id:'v_'+Date.now(),
       caminhao_id:currentTruck.id,
       data:document.getElementById('v-data').value,
       empresa:document.getElementById('v-empresa').value,

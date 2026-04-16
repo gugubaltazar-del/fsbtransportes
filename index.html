@@ -38,7 +38,15 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
 .truck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .truck-card{background:#fff;border:1px solid #e8e5de;border-radius:10px;padding:1rem;cursor:pointer;transition:all .15s;text-align:center}
 .truck-card:hover{border-color:#C8171A;box-shadow:0 2px 8px rgba(83,58,183,.1)}
-.truck-icon{font-size:30px;margin-bottom:8px}
+.truck-icon{height:36px;margin-bottom:8px;display:flex;align-items:center;justify-content:center}
+.truck-icon img{max-height:36px;max-width:80px;object-fit:contain}
+.marca-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border:1.5px solid #e0ddd5;border-radius:8px;cursor:pointer;font-size:11px;color:#888;min-width:72px;transition:all .15s}
+.marca-opt img{height:28px;width:auto;object-fit:contain}
+.marca-opt:hover{border-color:#C8171A;color:#1a1a1a}
+.marca-opt.selected{border-color:#C8171A;background:#fff5f5;color:#C8171A;font-weight:600}
+body.dark .marca-opt{border-color:#2e2f31;color:#888}
+body.dark .marca-opt:hover{border-color:#e04548;color:#e8e6e0}
+body.dark .marca-opt.selected{border-color:#e04548;background:#2a1515;color:#e04548}
 .truck-plate{font-size:15px;font-weight:700;letter-spacing:1px}
 .truck-sub{font-size:12px;color:#888;margin-top:2px}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto}
@@ -213,9 +221,27 @@ body.dark .subtitle{color:#888}
       <button class="close-btn" onclick="closeFormModal()">&#x2715;</button>
     </div>
     <div id="form-caminhao" style="display:none">
+      <div class="field" style="margin-bottom:12px">
+        <label>Marca</label>
+        <div id="marca-picker" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <div class="marca-opt" data-marca="Scania" onclick="selecionarMarca(this)">
+            <img src="logos/scania-logo.png" alt="Scania" /><span>Scania</span>
+          </div>
+          <div class="marca-opt" data-marca="Volvo" onclick="selecionarMarca(this)">
+            <img src="logos/volvo-logo.png" alt="Volvo" /><span>Volvo</span>
+          </div>
+          <div class="marca-opt" data-marca="Volkswagen" onclick="selecionarMarca(this)">
+            <img src="logos/volkswagen-logo.png" alt="Volkswagen" /><span>Volkswagen</span>
+          </div>
+          <div class="marca-opt" data-marca="Outra" onclick="selecionarMarca(this)">
+            <span style="font-size:22px">🚛</span><span>Outra</span>
+          </div>
+        </div>
+        <input type="hidden" id="c-marca" />
+      </div>
       <div class="grid2" style="margin-bottom:12px">
         <div class="field"><label>Placa do caminhão</label><input id="c-placa" placeholder="ABC-1234" /></div>
-        <div class="field"><label>Modelo / Descrição</label><input id="c-modelo" placeholder="Volvo FH 460" /></div>
+        <div class="field"><label>Modelo / Descrição</label><input id="c-modelo" placeholder="FH 460" /></div>
       </div>
       <div class="grid2" style="margin-bottom:12px">
         <div class="field"><label>Cor</label><input id="c-cor" placeholder="Branco" /></div>
@@ -367,6 +393,10 @@ function openFormModal(tipo){
   document.getElementById('form-modal-title').textContent=titles[tipo];
   ['caminhao','motorista','empresa','carreta'].forEach(t=>document.getElementById('form-'+t).style.display='none');
   document.getElementById('form-'+tipo).style.display='block';
+  if(tipo==='caminhao'){
+    document.getElementById('c-marca').value='';
+    document.querySelectorAll('.marca-opt').forEach(o=>o.classList.remove('selected'));
+  }
   document.getElementById('form-modal').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -387,6 +417,17 @@ async function loadCaminhoes(){
   }catch(e){toast('Erro ao carregar caminhões',true);}
 }
 
+const MARCA_LOGOS={
+  'Scania':'logos/scania-logo.png',
+  'Volvo':'logos/volvo-logo.png',
+  'Volkswagen':'logos/volkswagen-logo.png'
+};
+
+function marcaIcon(marca){
+  if(MARCA_LOGOS[marca]) return `<img src="${MARCA_LOGOS[marca]}" alt="${marca}" />`;
+  return `<span style="font-size:28px">🚛</span>`;
+}
+
 function renderTruckGrid(){
   const g=document.getElementById('truck-grid');
   const arr=cache.caminhoes;
@@ -394,9 +435,9 @@ function renderTruckGrid(){
   if(!arr.length){g.innerHTML='<div class="empty">Nenhum caminhão cadastrado.</div>';return;}
   g.innerHTML=arr.map((cam,i)=>`
     <div class="truck-card" onclick="openModal(${i})">
-      <div class="truck-icon">🚛</div>
+      <div class="truck-icon">${marcaIcon(cam.marca)}</div>
       <div class="truck-plate">${cam.placa}</div>
-      <div class="truck-sub">${cam.modelo||'—'}</div>
+      <div class="truck-sub">${cam.marca?cam.marca+' — ':''} ${cam.modelo||'—'}</div>
       <div style="margin-top:6px;font-size:11px;color:#aaa">${[cam.ano,cam.cor].filter(Boolean).join(' · ')}</div>
     </div>`).join('');
 }
@@ -407,15 +448,24 @@ function renderListaCaminhoes(){
   if(!arr.length){el.innerHTML='<div class="empty">Nenhum cadastrado.</div>';return;}
   el.innerHTML=arr.map(c=>`
     <div class="list-item">
-      <div>
-        <div style="font-weight:500">${c.placa} <span style="font-weight:400;color:#888">— ${c.modelo||'—'}</span></div>
-        <div style="font-size:11px;color:#aaa">${[c.cor,c.ano,c.renavam?'Renavam: '+c.renavam:'',c.antt?'ANTT: '+c.antt:''].filter(Boolean).join(' · ')}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;display:flex;align-items:center;justify-content:center">${MARCA_LOGOS[c.marca]?`<img src="${MARCA_LOGOS[c.marca]}" style="max-height:24px;max-width:40px;object-fit:contain" />`:'🚛'}</div>
+        <div>
+          <div style="font-weight:500">${c.placa} <span style="font-weight:400;color:#888">— ${c.marca?c.marca+' ':''} ${c.modelo||'—'}</span></div>
+          <div style="font-size:11px;color:#aaa">${[c.cor,c.ano,c.renavam?'Renavam: '+c.renavam:'',c.antt?'ANTT: '+c.antt:''].filter(Boolean).join(' · ')}</div>
+        </div>
       </div>
       <div style="display:flex;gap:6px">
         <button class="btn-primary" style="font-size:12px;padding:4px 10px" onclick="editarCaminhao('${c.id}')">Editar</button>
         <button class="btn-danger" onclick="removerCaminhao('${c.id}')">Remover</button>
       </div>
     </div>`).join('');
+}
+
+function selecionarMarca(el){
+  document.querySelectorAll('.marca-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('c-marca').value=el.dataset.marca;
 }
 
 let editandoCaminhaoId=null;
@@ -430,6 +480,10 @@ function editarCaminhao(id){
   document.getElementById('c-ano').value=c.ano||'';
   document.getElementById('c-renavam').value=c.renavam||'';
   document.getElementById('c-antt').value=c.antt||'';
+  document.getElementById('c-marca').value=c.marca||'';
+  document.querySelectorAll('.marca-opt').forEach(o=>{
+    o.classList.toggle('selected', o.dataset.marca===(c.marca||''));
+  });
   document.getElementById('form-modal-title').textContent='Editar caminhão';
   document.getElementById('btn-salvar-caminhao').textContent='Atualizar caminhão';
   ['caminhao','motorista','empresa','carreta'].forEach(t=>document.getElementById('form-'+t).style.display='none');
@@ -445,6 +499,7 @@ async function salvarCaminhao(){
   btn.disabled=true; btn.textContent='Salvando...';
   const body={
     placa,
+    marca:document.getElementById('c-marca').value.trim(),
     modelo:document.getElementById('c-modelo').value.trim(),
     cor:document.getElementById('c-cor').value.trim(),
     ano:document.getElementById('c-ano').value.trim(),

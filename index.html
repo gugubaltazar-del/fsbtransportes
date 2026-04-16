@@ -37,7 +37,9 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
 .badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:#f0ede5;color:#666}
 .truck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .truck-card{background:#fff;border:1px solid #e8e5de;border-radius:10px;padding:1rem;cursor:pointer;transition:all .15s;text-align:center}
-.truck-card:hover{border-color:#C8171A;box-shadow:0 2px 8px rgba(83,58,183,.1)}
+.truck-card:hover{border-color:#C8171A;box-shadow:0 2px 8px rgba(200,23,26,.1)}
+.truck-card.selected-truck{border-color:#C8171A;box-shadow:0 2px 12px rgba(200,23,26,.2);background:#fff8f8}
+body.dark .truck-card.selected-truck{background:#1f1214}
 .truck-icon{height:36px;margin-bottom:8px;display:flex;align-items:center;justify-content:center}
 .truck-icon img{max-height:36px;max-width:80px;object-fit:contain}
 .marca-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border:1.5px solid #e0ddd5;border-radius:8px;cursor:pointer;font-size:11px;color:#888;min-width:72px;transition:all .15s}
@@ -152,7 +154,6 @@ body.dark .subtitle{color:#888}
   </div>
   <div class="nav">
     <button class="nav-btn active" onclick="showTab('caminhoes',this)">Frota</button>
-    <button class="nav-btn" onclick="showTab('todas-viagens',this);loadTodasViagens()">Todas as Viagens</button>
     <button class="nav-btn" onclick="showTab('cad-motorista',this)">Motoristas</button>
     <button class="nav-btn" onclick="showTab('cad-caminhao',this)">Caminhões</button>
     <button class="nav-btn" onclick="showTab('cad-carreta',this)">Carretas / Bug</button>
@@ -166,6 +167,22 @@ body.dark .subtitle{color:#888}
         <span class="badge" id="frota-count">—</span>
       </div>
       <div class="truck-grid" id="truck-grid"><div class="loading">Carregando...</div></div>
+    </div>
+    <div id="frota-painel" style="display:none">
+      <div class="card" style="margin-top:0">
+        <div class="section-header">
+          <div>
+            <div class="card-title" style="margin-bottom:2px" id="frota-painel-titulo">—</div>
+            <div style="font-size:12px;color:#888" id="frota-painel-sub">—</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-primary" onclick="openViagemModal()">+ Adicionar viagem</button>
+            <button class="close-btn" onclick="fecharFrotaPainel()" style="font-size:16px">&#x2715;</button>
+          </div>
+        </div>
+        <div class="summary-row" id="frota-summary"></div>
+        <div id="frota-trips"><div class="loading">Carregando viagens...</div></div>
+      </div>
     </div>
   </div>
 
@@ -209,15 +226,6 @@ body.dark .subtitle{color:#888}
     </div>
   </div>
 
-  <div id="tab-todas-viagens" class="tab">
-    <div class="card">
-      <div class="section-header">
-        <span class="card-title" style="margin-bottom:0">Todas as viagens</span>
-        <span class="badge" id="todas-viagens-count">—</span>
-      </div>
-      <div id="todas-viagens-container"><div class="loading">Carregando...</div></div>
-    </div>
-  </div>
 </div>
 </div><!-- /app-content -->
 
@@ -301,23 +309,6 @@ body.dark .subtitle{color:#888}
   </div>
 </div>
 
-<!-- MODAL RELATÓRIO -->
-<div class="modal-bg" id="modal">
-  <div class="modal">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title" id="modal-title">Relatório</div>
-        <div style="font-size:12px;color:#888" id="modal-sub"></div>
-      </div>
-      <button class="close-btn" onclick="closeModal()">&#x2715;</button>
-    </div>
-    <div class="summary-row" id="modal-summary"></div>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
-      <button class="btn-primary" onclick="openViagemModal()">+ Adicionar viagem</button>
-    </div>
-    <div id="modal-trips"><div class="loading">Carregando viagens...</div></div>
-  </div>
-</div>
 
 <!-- MODAL ADICIONAR VIAGEM -->
 <div class="modal-bg" id="viagem-modal">
@@ -747,17 +738,23 @@ async function removerCarreta(id){
 // ── MODAL RELATÓRIO ──
 async function openModal(idx){
   currentTruck=cache.caminhoes[idx];
-  document.getElementById('modal-title').textContent='Caminhão '+currentTruck.placa;
-  document.getElementById('modal-sub').textContent=currentTruck.modelo||'';
+  document.getElementById('frota-painel-titulo').textContent='Caminhão '+currentTruck.placa;
+  document.getElementById('frota-painel-sub').textContent=currentTruck.modelo||'';
+  // Destaca card selecionado
+  document.querySelectorAll('.truck-card').forEach((c,i)=>c.classList.toggle('selected-truck',i===idx));
   populateSelects();
-  document.getElementById('modal').classList.add('open');
-  document.body.style.overflow='hidden';
+  document.getElementById('frota-painel').style.display='block';
+  document.getElementById('frota-painel').scrollIntoView({behavior:'smooth',block:'nearest'});
   await renderModalTrips();
 }
 
 function closeModal(){
-  document.getElementById('modal').classList.remove('open');
-  document.body.style.overflow='';
+  currentTruck=null;
+}
+
+function fecharFrotaPainel(){
+  document.getElementById('frota-painel').style.display='none';
+  document.querySelectorAll('.truck-card').forEach(c=>c.classList.remove('selected-truck'));
   currentTruck=null;
 }
 
@@ -803,7 +800,7 @@ async function salvarViagem(){
 
 async function renderModalTrips(){
   if(!currentTruck) return;
-  const el=document.getElementById('modal-trips');
+  const el=document.getElementById('frota-trips');
   el.innerHTML='<div class="loading">Carregando viagens...</div>';
   try{
     const viagens=await db('viagens','GET',null,`?caminhao_id=eq.${currentTruck.id}&order=data.asc`)||[];
@@ -811,15 +808,14 @@ async function renderModalTrips(){
     const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
     const sumComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
     const sumAb=viagens.reduce((a,v)=>a+(v.abastecimento||0),0);
-    const sumLitros=viagens.reduce((a,v)=>a+(v.litros||0),0);
     const fmt=n=>'R$ '+n.toFixed(2).replace('.',',');
-    document.getElementById('modal-summary').innerHTML=`
+    document.getElementById('frota-summary').innerHTML=`
       <div class="summary-card"><div class="summary-label">Total viagens</div><div class="summary-value">${viagens.length}</div></div>
       <div class="summary-card"><div class="summary-label">Frete total</div><div class="summary-value" style="font-size:15px">${fmt(sumFrete)}</div></div>
       <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
       <div class="summary-card"><div class="summary-label">Abastecimento</div><div class="summary-value" style="font-size:15px">${fmt(sumAb)}</div></div>
     `;
-    if(!viagens.length){el.innerHTML='<div class="empty">Nenhuma viagem registrada.</div>';return;}
+    if(!viagens.length){el.innerHTML='<div class="empty" style="padding:1.5rem 0">Nenhuma viagem registrada.</div>';return;}
     el.innerHTML=`<div class="table-scroll"><table class="trip-table">
       <thead><tr>
         <th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
@@ -894,55 +890,9 @@ function closeViagemModal(){
   editandoViagemId=null;
 }
 
-document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.getElementById('form-modal').addEventListener('click',function(e){if(e.target===this)closeFormModal();});
 document.getElementById('viagem-modal').addEventListener('click',function(e){if(e.target===this)closeViagemModal();});
 
-async function loadTodasViagens(){
-  const el=document.getElementById('todas-viagens-container');
-  el.innerHTML='<div class="loading">Carregando...</div>';
-  try{
-    const viagens=await db('viagens','GET',null,'?order=data.desc')||[];
-    document.getElementById('todas-viagens-count').textContent=viagens.length+' viagem'+(viagens.length!==1?'ns':'');
-    if(!viagens.length){el.innerHTML='<div class="empty">Nenhuma viagem registrada.</div>';return;}
-    const fmt=n=>'R$ '+(n||0).toFixed(2).replace('.',',');
-    const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
-    const sumComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
-    const sumAb=viagens.reduce((a,v)=>a+(v.abastecimento||0),0);
-    const placas={};
-    cache.caminhoes.forEach(c=>placas[c.id]=c.placa);
-    el.innerHTML=`
-    <div class="summary-row" style="margin-bottom:1rem">
-      <div class="summary-card"><div class="summary-label">Total viagens</div><div class="summary-value">${viagens.length}</div></div>
-      <div class="summary-card"><div class="summary-label">Frete total</div><div class="summary-value" style="font-size:15px">${fmt(sumFrete)}</div></div>
-      <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
-      <div class="summary-card"><div class="summary-label">Abastecimento</div><div class="summary-value" style="font-size:15px">${fmt(sumAb)}</div></div>
-    </div>
-    <div class="table-scroll"><table class="trip-table">
-      <thead><tr>
-        <th>Caminhão</th><th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
-      </tr></thead>
-      <tbody>${viagens.map(v=>`<tr>
-        <td><strong>${placas[v.caminhao_id]||'—'}</strong></td>
-        <td>${v.data||'—'}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
-        <td>${v.loc_carga||'—'}</td><td>${v.loc_dev||'—'}</td><td>${v.container||'—'}</td><td>${v.bug||'—'}</td>
-        <td>${v.motorista||'—'}</td>
-        <td>${fmt(v.frete)}</td><td>${fmt(v.comissao)}</td><td>${fmt(v.abastecimento)}</td>
-        <td>${v.litros||0} L</td><td>${v.obs||'—'}</td>
-        <td><button class="btn-danger" onclick="removerViagemGeral('${v.id}')">&#x2715;</button></td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
-  }catch(e){el.innerHTML='<div class="empty">Erro ao carregar viagens.</div>';}
-}
-
-async function removerViagemGeral(id){
-  if(!confirm('Remover esta viagem?')) return;
-  try{
-    await db('viagens','DELETE',null,`?id=eq.${id}`);
-    await loadTodasViagens();
-    toast('Viagem removida.');
-  }catch(e){toast('Erro ao remover viagem.',true);}
-}
 
 async function syncSilencioso(){
   try{

@@ -64,6 +64,24 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
 </style>
 </head>
 <body>
+
+<!-- TELA DE LOGIN -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:#f5f4f0;z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border:1px solid #e8e5de;border-radius:12px;padding:2rem;width:min(90vw,360px);display:flex;flex-direction:column;gap:16px">
+    <div style="text-align:center">
+      <div style="font-size:32px">🚛</div>
+      <div style="font-size:18px;font-weight:700;margin-top:8px">FSB Transportes</div>
+      <div style="font-size:13px;color:#888;margin-top:4px">Digite a senha para continuar</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input id="login-input" type="password" placeholder="Senha" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')verificarSenha()" />
+      <div id="login-erro" style="color:#a32d2d;font-size:12px;display:none">Senha incorreta.</div>
+      <button onclick="verificarSenha()" style="padding:10px;background:#533AB7;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="app-content" style="display:none">
 <div class="app">
   <h1>🚛 Transportadora</h1>
   <div class="subtitle">Gestão de frota, motoristas e viagens</div>
@@ -136,6 +154,7 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
     </div>
   </div>
 </div>
+</div><!-- /app-content -->
 
 <!-- POPUP CADASTRO -->
 <div class="modal-bg" id="form-modal">
@@ -727,6 +746,33 @@ async function syncSilencioso(){
 
 Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]);
 setInterval(syncSilencioso, 5000);
+
+const SENHA_CORRETA = 'fstgobccrb';
+
+function verificarSenha(){
+  const val = document.getElementById('login-input').value;
+  if(val === SENHA_CORRETA){
+    sessionStorage.setItem('fsb_auth','1');
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-content').style.display='block';
+    document.getElementById('login-erro').style.display='none';
+  } else {
+    document.getElementById('login-erro').style.display='block';
+    document.getElementById('login-input').value='';
+    document.getElementById('login-input').focus();
+  }
+}
+
+(function init(){
+  if(sessionStorage.getItem('fsb_auth')==='1'){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-content').style.display='block';
+  } else {
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app-content').style.display='none';
+    setTimeout(()=>document.getElementById('login-input').focus(),100);
+  }
+})();
 </script>
 </body>
 </html>

@@ -161,6 +161,19 @@ body.dark #dark-toggle{background:#1c1d1f;border-color:#2e2f31;color:#e8e6e0}
 body.dark #dark-toggle:hover{background:#252628}
 body.dark h1,body.dark .subtitle{color:#e8e6e0}
 body.dark .subtitle{color:#888}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:1.5rem}
+.dash-kpi{background:#fff;border:1px solid #e8e5de;border-radius:10px;padding:1.25rem;text-align:center}
+.dash-kpi-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.dash-kpi-value{font-size:22px;font-weight:700;color:#1a1a1a}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem}
+.chart-card{background:#fff;border:1px solid #e8e5de;border-radius:10px;padding:1.25rem}
+.chart-card h3{font-size:13px;font-weight:600;margin-bottom:1rem;color:#1a1a1a}
+.chart-card canvas{max-height:260px}
+body.dark .dash-kpi{background:#1c1d1f;border-color:#2e2f31}
+body.dark .dash-kpi-value{color:#e8e6e0}
+body.dark .chart-card{background:#1c1d1f;border-color:#2e2f31}
+body.dark .chart-card h3{color:#e8e6e0}
+@media(max-width:700px){.charts-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -211,6 +224,7 @@ body.dark .subtitle{color:#888}
     <button class="nav-drawer-btn" onclick="showTabMobile('cad-caminhao',this)">Caminhões</button>
     <button class="nav-drawer-btn" onclick="showTabMobile('cad-carreta',this)">Carretas / Bug</button>
     <button class="nav-drawer-btn" onclick="showTabMobile('cad-empresa',this)">Empresas</button>
+    <button class="nav-drawer-btn" onclick="showTabMobile('dashboard',this);renderDashboard()">Dashboard</button>
   </div>
 </div>
 
@@ -232,6 +246,7 @@ body.dark .subtitle{color:#888}
     <button class="nav-btn" onclick="showTab('cad-caminhao',this)">Caminhões</button>
     <button class="nav-btn" onclick="showTab('cad-carreta',this)">Carretas / Bug</button>
     <button class="nav-btn" onclick="showTab('cad-empresa',this)">Empresas</button>
+    <button class="nav-btn" onclick="showTab('dashboard',this);renderDashboard()">Dashboard</button>
   </div>
 
   <div id="tab-caminhoes" class="tab active">
@@ -307,6 +322,25 @@ body.dark .subtitle{color:#888}
         <button class="btn-primary" onclick="openFormModal('carreta')">+ Nova carreta</button>
       </div>
       <div id="lista-carretas"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="tab">
+    <div class="dash-grid" id="dash-kpis"></div>
+    <div class="charts-grid">
+      <div class="chart-card" style="grid-column:1/-1">
+        <h3>Faturamento mensal — últimos 6 meses</h3>
+        <canvas id="chart-mensal"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Despesas por categoria</h3>
+        <canvas id="chart-despesas"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Faturamento por caminhão</h3>
+        <canvas id="chart-caminhao"></canvas>
+      </div>
     </div>
   </div>
 
@@ -1374,6 +1408,105 @@ function verificarSenha(){
     setTimeout(()=>document.getElementById('login-input').focus(),100);
   }
 })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let _charts={};
+
+async function renderDashboard(){
+  const dark=document.body.classList.contains('dark');
+  const gridColor=dark?'rgba(255,255,255,.07)':'rgba(0,0,0,.06)';
+  const textColor=dark?'#aaa':'#888';
+  const fmt=n=>'R$ '+(n||0).toFixed(2).replace('.',',');
+
+  // busca todas as viagens
+  const viagens=await db('viagens','GET',null,'?order=data.asc')||[];
+
+  // ── KPIs ──
+  const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
+  const sumDespesas=viagens.reduce((a,v)=>a+(v.comissao||0)+(v.abastecimento||0)+(v.pedagios||0),0);
+  const sumTotal=sumFrete-sumDespesas;
+  document.getElementById('dash-kpis').innerHTML=`
+    <div class="dash-kpi"><div class="dash-kpi-label">Total de viagens</div><div class="dash-kpi-value">${viagens.length}</div></div>
+    <div class="dash-kpi"><div class="dash-kpi-label">Frete total</div><div class="dash-kpi-value" style="font-size:16px">${fmt(sumFrete)}</div></div>
+    <div class="dash-kpi"><div class="dash-kpi-label">Total despesas</div><div class="dash-kpi-value" style="font-size:16px;color:#C8171A">${fmt(sumDespesas)}</div></div>
+    <div class="dash-kpi"><div class="dash-kpi-label">Resultado líquido</div><div class="dash-kpi-value" style="font-size:16px;color:${sumTotal>=0?'#22a05a':'#C8171A'}">${fmt(sumTotal)}</div></div>
+    <div class="dash-kpi"><div class="dash-kpi-label">Caminhões</div><div class="dash-kpi-value">${cache.caminhoes.length}</div></div>
+    <div class="dash-kpi"><div class="dash-kpi-label">Motoristas</div><div class="dash-kpi-value">${cache.motoristas.length}</div></div>
+  `;
+
+  // ── GRÁFICO MENSAL ──
+  const meses={};
+  const hoje=new Date();
+  for(let i=5;i>=0;i--){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    meses[key]={frete:0,despesas:0};
+  }
+  viagens.forEach(v=>{
+    if(!v.data) return;
+    const key=v.data.slice(0,7);
+    if(meses[key]){
+      meses[key].frete+=(v.frete||0);
+      meses[key].despesas+=(v.comissao||0)+(v.abastecimento||0)+(v.pedagios||0);
+    }
+  });
+  const labMeses=Object.keys(meses).map(k=>{
+    const [y,m]=k.split('-');
+    return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});
+  });
+  destroyChart('chart-mensal');
+  _charts['chart-mensal']=new Chart(document.getElementById('chart-mensal'),{
+    type:'bar',
+    data:{
+      labels:labMeses,
+      datasets:[
+        {label:'Frete',data:Object.values(meses).map(m=>m.frete),backgroundColor:'rgba(200,23,26,.75)',borderRadius:6},
+        {label:'Despesas',data:Object.values(meses).map(m=>m.despesas),backgroundColor:'rgba(245,158,11,.65)',borderRadius:6}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{labels:{color:textColor}}},scales:{
+      x:{ticks:{color:textColor},grid:{color:gridColor}},
+      y:{ticks:{color:textColor,callback:v=>'R$ '+v.toFixed(0)},grid:{color:gridColor}}
+    }}
+  });
+
+  // ── GRÁFICO DESPESAS (rosca) ──
+  const totPedagios=viagens.reduce((a,v)=>a+(v.pedagios||0),0);
+  const totAbastec=viagens.reduce((a,v)=>a+(v.abastecimento||0),0);
+  const totComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
+  destroyChart('chart-despesas');
+  _charts['chart-despesas']=new Chart(document.getElementById('chart-despesas'),{
+    type:'doughnut',
+    data:{
+      labels:['Pedágios','Abastecimento','Comissões'],
+      datasets:[{data:[totPedagios,totAbastec,totComissao],backgroundColor:['#3b82f6','#f59e0b','#C8171A'],borderWidth:0}]
+    },
+    options:{responsive:true,plugins:{legend:{labels:{color:textColor}}}}
+  });
+
+  // ── GRÁFICO POR CAMINHÃO ──
+  const porCaminhao={};
+  cache.caminhoes.forEach(c=>porCaminhao[c.id]={placa:c.placa,frete:0});
+  viagens.forEach(v=>{if(porCaminhao[v.caminhao_id]) porCaminhao[v.caminhao_id].frete+=(v.frete||0);});
+  const camArr=Object.values(porCaminhao).sort((a,b)=>b.frete-a.frete);
+  destroyChart('chart-caminhao');
+  _charts['chart-caminhao']=new Chart(document.getElementById('chart-caminhao'),{
+    type:'bar',
+    data:{
+      labels:camArr.map(c=>c.placa),
+      datasets:[{label:'Frete total',data:camArr.map(c=>c.frete),backgroundColor:'rgba(200,23,26,.75)',borderRadius:6}]
+    },
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{
+      x:{ticks:{color:textColor,callback:v=>'R$ '+v.toFixed(0)},grid:{color:gridColor}},
+      y:{ticks:{color:textColor},grid:{color:gridColor}}
+    }}
+  });
+}
+
+function destroyChart(id){
+  if(_charts[id]){_charts[id].destroy();delete _charts[id];}
+}
 </script>
 </body>
 </html>

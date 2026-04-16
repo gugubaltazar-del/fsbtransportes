@@ -408,7 +408,9 @@ function closeFormModal(){
   document.getElementById('form-modal').classList.remove('open');
   document.body.style.overflow='';
   editandoCaminhaoId=null;
+  editandoMotoristaId=null;
   document.getElementById('btn-salvar-caminhao').textContent='Salvar caminhão';
+  document.getElementById('btn-salvar-motorista').textContent='Salvar motorista';
 }
 
 // ── CAMINHÕES ──
@@ -559,8 +561,32 @@ function renderMotoristas(){
           <div style="font-size:11px;color:#aaa">${[m.nasc?'Nasc: '+m.nasc:'',m.inicio?'Início: '+m.inicio:''].filter(Boolean).join(' · ')}</div>
         </div>
       </div>
-      <button class="btn-danger" onclick="removerMotorista('${m.id}')">Remover</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn-primary" style="font-size:12px;padding:4px 10px" onclick="editarMotorista('${m.id}')">Editar</button>
+        <button class="btn-danger" onclick="removerMotorista('${m.id}')">Remover</button>
+      </div>
     </div>`).join('');
+}
+
+let editandoMotoristaId=null;
+
+function editarMotorista(id){
+  const m=cache.motoristas.find(x=>x.id===id);
+  if(!m) return;
+  editandoMotoristaId=id;
+  document.getElementById('m-nome').value=m.nome||'';
+  document.getElementById('m-cpf').value=m.cpf||'';
+  document.getElementById('m-tel').value=m.tel||'';
+  document.getElementById('m-nasc').value=m.nasc||'';
+  document.getElementById('m-inicio').value=m.inicio||'';
+  const preview=document.getElementById('m-foto-preview');
+  preview.innerHTML=m.foto?`<img src="${m.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`:'👤';
+  document.getElementById('form-modal-title').textContent='Editar motorista';
+  document.getElementById('btn-salvar-motorista').textContent='Atualizar motorista';
+  ['caminhao','motorista','empresa','carreta'].forEach(t=>document.getElementById('form-'+t).style.display='none');
+  document.getElementById('form-motorista').style.display='block';
+  document.getElementById('form-modal').classList.add('open');
+  document.body.style.overflow='hidden';
 }
 
 function previewFoto(input){
@@ -577,6 +603,7 @@ async function salvarMotorista(){
   const nome=document.getElementById('m-nome').value.trim();
   if(!nome) return toast('Informe o nome.',true);
   const btn=document.getElementById('btn-salvar-motorista');
+  const isEdit=!!editandoMotoristaId;
   btn.disabled=true; btn.textContent='Salvando...';
   const fotoInput=document.getElementById('m-foto-input');
   let foto=null;
@@ -586,22 +613,31 @@ async function salvarMotorista(){
       r.onload=e=>res(e.target.result);
       r.readAsDataURL(fotoInput.files[0]);
     });
+  } else if(isEdit){
+    foto=cache.motoristas.find(x=>x.id===editandoMotoristaId)?.foto||null;
   }
+  const body={
+    nome,
+    cpf:document.getElementById('m-cpf').value.trim(),
+    tel:document.getElementById('m-tel').value.trim(),
+    nasc:document.getElementById('m-nasc').value||null,
+    inicio:document.getElementById('m-inicio').value||null,
+    foto
+  };
   try{
-    await db('motoristas','POST',{
-      nome,
-      cpf:document.getElementById('m-cpf').value.trim(),
-      tel:document.getElementById('m-tel').value.trim(),
-      nasc:document.getElementById('m-nasc').value,
-      inicio:document.getElementById('m-inicio').value,
-      foto
-    });
+    if(isEdit){
+      await db('motoristas','PATCH',body,`?id=eq.${editandoMotoristaId}`);
+      editandoMotoristaId=null;
+      toast('Motorista atualizado!');
+    } else {
+      await db('motoristas','POST',body);
+      toast('Motorista salvo!');
+    }
     ['m-nome','m-cpf','m-tel','m-nasc','m-inicio'].forEach(f=>document.getElementById(f).value='');
     fotoInput.value='';
     document.getElementById('m-foto-preview').innerHTML='👤';
     await loadMotoristas();
     closeFormModal();
-    toast('Motorista salvo!');
   }catch(e){toast('Erro ao salvar motorista.',true);}
   finally{btn.disabled=false; btn.textContent='Salvar motorista';}
 }

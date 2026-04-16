@@ -957,7 +957,7 @@ function editarViagem(id){
   document.getElementById('viagem-modal-title').textContent='Editar viagem';
   document.getElementById('btn-salvar-viagem').textContent='Salvar alterações';
   const cb=document.getElementById('v-comissao-auto');
-  cb.checked=false; toggleComissaoAuto(cb);
+  cb.checked=true; toggleComissaoAuto(cb);
   populateSelects();
   document.getElementById('v-data').value=v.data||'';
   document.getElementById('v-empresa').value=v.empresa||'';

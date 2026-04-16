@@ -436,15 +436,12 @@ function renderTruckGrid(){
   if(!arr.length){g.innerHTML='<div class="empty">Nenhum caminhão cadastrado.</div>';return;}
   g.innerHTML=`
     <div class="truck-card" id="card-todos" onclick="abrirTodosOsCaminhoes()">
-      <div class="truck-icon"><span style="font-size:26px">🚛</span></div>
+      <div class="truck-icon"><img src="logo/fsb-logo.png" alt="Todos" /></div>
       <div class="truck-plate">Todos</div>
-      <div class="truck-sub">Todas as viagens</div>
     </div>`+arr.map((cam,i)=>`
     <div class="truck-card" onclick="openModal(${i})">
       <div class="truck-icon">${marcaIcon(cam.marca)}</div>
       <div class="truck-plate">${cam.placa}</div>
-      <div class="truck-sub">${cam.marca?cam.marca+' — ':''} ${cam.modelo||'—'}</div>
-      <div style="margin-top:6px;font-size:11px;color:#aaa">${[cam.ano,cam.cor].filter(Boolean).join(' · ')}</div>
     </div>`).join('');
 }
 

@@ -73,6 +73,7 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
     <button class="nav-btn" onclick="showTab('cad-motorista',this)">Motoristas</button>
     <button class="nav-btn" onclick="showTab('cad-empresa',this)">Empresas</button>
     <button class="nav-btn" onclick="showTab('cad-carreta',this)">Carretas / Bug</button>
+    <button class="nav-btn" onclick="showTab('todas-viagens',this);loadTodasViagens()">Todas as Viagens</button>
   </div>
 
   <div id="tab-caminhoes" class="tab active">
@@ -122,6 +123,16 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
         <button class="btn-primary" onclick="openFormModal('carreta')">+ Nova carreta</button>
       </div>
       <div id="lista-carretas"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <div id="tab-todas-viagens" class="tab">
+    <div class="card">
+      <div class="section-header">
+        <span class="card-title" style="margin-bottom:0">Todas as viagens</span>
+        <span class="badge" id="todas-viagens-count">—</span>
+      </div>
+      <div id="todas-viagens-container"><div class="loading">Carregando...</div></div>
     </div>
   </div>
 </div>
@@ -657,6 +668,42 @@ async function removerViagem(id){
 
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.getElementById('form-modal').addEventListener('click',function(e){if(e.target===this)closeFormModal();});
+
+async function loadTodasViagens(){
+  const el=document.getElementById('todas-viagens-container');
+  el.innerHTML='<div class="loading">Carregando...</div>';
+  try{
+    const viagens=await db('viagens','GET',null,'?order=data.desc')||[];
+    document.getElementById('todas-viagens-count').textContent=viagens.length+' viagem'+(viagens.length!==1?'ns':'');
+    if(!viagens.length){el.innerHTML='<div class="empty">Nenhuma viagem registrada.</div>';return;}
+    const fmt=n=>'R$ '+(n||0).toFixed(2).replace('.',',');
+    const placas={};
+    cache.caminhoes.forEach(c=>placas[c.id]=c.placa);
+    el.innerHTML=`<div style="overflow-x:auto"><table class="trip-table">
+      <thead><tr>
+        <th>Caminhão</th><th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
+      </tr></thead>
+      <tbody>${viagens.map(v=>`<tr>
+        <td><strong>${placas[v.caminhao_id]||'—'}</strong></td>
+        <td>${v.data||'—'}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
+        <td>${v.loc_carga||'—'}</td><td>${v.loc_dev||'—'}</td><td>${v.container||'—'}</td><td>${v.bug||'—'}</td>
+        <td>${v.motorista||'—'}</td>
+        <td>${fmt(v.frete)}</td><td>${fmt(v.comissao)}</td><td>${fmt(v.abastecimento)}</td>
+        <td>${v.litros||0} L</td><td>${v.obs||'—'}</td>
+        <td><button class="btn-danger" onclick="removerViagemGeral('${v.id}')">&#x2715;</button></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  }catch(e){el.innerHTML='<div class="empty">Erro ao carregar viagens.</div>';}
+}
+
+async function removerViagemGeral(id){
+  if(!confirm('Remover esta viagem?')) return;
+  try{
+    await db('viagens','DELETE',null,`?id=eq.${id}`);
+    await loadTodasViagens();
+    toast('Viagem removida.');
+  }catch(e){toast('Erro ao remover viagem.',true);}
+}
 
 Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]);
 </script>

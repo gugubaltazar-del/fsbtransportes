@@ -1014,6 +1014,9 @@ function toggleDark(){
   localStorage.setItem('fsb_dark',dark?'1':'0');
 }
 
+// Aplica estado inicial do checkbox de comissão
+toggleComissaoAuto(document.getElementById('v-comissao-auto'));
+
 (function initDark(){
   if(localStorage.getItem('fsb_dark')==='1'){
     document.body.classList.add('dark');

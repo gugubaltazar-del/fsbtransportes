@@ -460,9 +460,19 @@ function openFormModal(tipo){
   document.getElementById('form-modal-title').textContent=titles[tipo];
   ['caminhao','motorista','empresa','carreta'].forEach(t=>document.getElementById('form-'+t).style.display='none');
   document.getElementById('form-'+tipo).style.display='block';
+  // limpar campos do formulário
+  document.getElementById('form-'+tipo).querySelectorAll('input,select,textarea').forEach(el=>el.value='');
   if(tipo==='caminhao'){
     document.getElementById('c-marca').value='';
     document.querySelectorAll('.marca-opt').forEach(o=>o.classList.remove('selected'));
+  }
+  if(tipo==='motorista'){
+    editandoMotoristaId=null;
+    document.getElementById('btn-salvar-motorista').textContent='Salvar motorista';
+    const preview=document.getElementById('m-foto-preview');
+    if(preview) preview.innerHTML='👤';
+    const fotoInput=document.getElementById('m-foto-input');
+    if(fotoInput) fotoInput.value='';
   }
   document.getElementById('form-modal').classList.add('open');
   document.body.style.overflow='hidden';

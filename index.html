@@ -17,6 +17,36 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
 .nav-btn{padding:8px 16px;border:none;background:none;cursor:pointer;font-size:13px;color:#888;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;border-radius:4px 4px 0 0;transition:all .15s}
 .nav-btn:hover{color:#1a1a1a;background:#edebe5}
 .nav-btn.active{color:#1a1a1a;border-bottom:2.5px solid #C8171A;font-weight:600}
+/* hamburger / mobile nav */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px;color:inherit;line-height:1}
+.hamburger span{display:block;width:22px;height:2px;background:currentColor;margin:5px 0;border-radius:2px;transition:all .2s}
+.nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200}
+.nav-overlay.open{display:block}
+.nav-drawer{position:fixed;top:0;left:-260px;width:240px;height:100%;background:#fff;z-index:201;box-shadow:2px 0 16px rgba(0,0,0,.15);transition:left .25s ease;display:flex;flex-direction:column;padding:0}
+.nav-drawer.open{left:0}
+.nav-drawer-header{display:flex;align-items:center;gap:10px;padding:1rem 1.25rem;border-bottom:1px solid #e8e5de}
+.nav-drawer-header img{height:32px;width:auto}
+.nav-drawer-header span{font-size:15px;font-weight:700}
+.nav-drawer .close-drawer{margin-left:auto;background:none;border:none;cursor:pointer;font-size:20px;color:#888;line-height:1}
+.nav-drawer-items{display:flex;flex-direction:column;padding:8px 0}
+.nav-drawer-btn{padding:14px 1.25rem;border:none;background:none;cursor:pointer;font-size:14px;color:#555;text-align:left;border-left:3px solid transparent;transition:all .15s}
+.nav-drawer-btn:hover{background:#f5f4f0;color:#1a1a1a}
+.nav-drawer-btn.active{color:#C8171A;border-left-color:#C8171A;font-weight:600;background:#fff5f5}
+body.dark .nav-drawer{background:#1a1b1e;border-right:1px solid #2e2f31}
+body.dark .nav-drawer-header{border-bottom-color:#2e2f31}
+body.dark .nav-drawer-header span{color:#e8e6e0}
+body.dark .nav-drawer-btn{color:#aaa}
+body.dark .nav-drawer-btn:hover{background:#252628;color:#e8e6e0}
+body.dark .nav-drawer-btn.active{color:#e04548;border-left-color:#e04548;background:#1f1214}
+@media(max-width:600px){
+  .hamburger{display:block}
+  .nav{display:none}
+  .app{padding:.75rem}
+  .app-header{margin-bottom:.75rem}
+  .truck-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .section-header{flex-wrap:wrap;gap:8px}
+}
 .tab{display:none}.tab.active{display:block}
 .card{background:#fff;border:1px solid #e8e5de;border-radius:10px;padding:1.25rem;margin-bottom:1rem}
 .card-title{font-size:14px;font-weight:600;margin-bottom:1rem;color:#1a1a1a}
@@ -144,9 +174,29 @@ body.dark .subtitle{color:#888}
   </div>
 </div>
 
+<!-- Nav drawer (mobile) -->
+<div class="nav-overlay" id="nav-overlay" onclick="fecharDrawer()"></div>
+<div class="nav-drawer" id="nav-drawer">
+  <div class="nav-drawer-header">
+    <img src="logo/fsb-logo.png" alt="FSB" />
+    <span>FSB Transportes</span>
+    <button class="close-drawer" onclick="fecharDrawer()">&#x2715;</button>
+  </div>
+  <div class="nav-drawer-items">
+    <button class="nav-drawer-btn active" onclick="showTabMobile('caminhoes',this)">Frota</button>
+    <button class="nav-drawer-btn" onclick="showTabMobile('cad-motorista',this)">Motoristas</button>
+    <button class="nav-drawer-btn" onclick="showTabMobile('cad-caminhao',this)">Caminhões</button>
+    <button class="nav-drawer-btn" onclick="showTabMobile('cad-carreta',this)">Carretas / Bug</button>
+    <button class="nav-drawer-btn" onclick="showTabMobile('cad-empresa',this)">Empresas</button>
+  </div>
+</div>
+
 <div id="app-content" style="display:none">
 <div class="app">
   <div class="app-header">
+    <button class="hamburger" onclick="abrirDrawer()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
     <img src="logo/fsb-logo.png" alt="FSB Transportes" />
     <div>
       <h1 style="margin-bottom:2px">FSB Transportes</h1>
@@ -402,7 +452,7 @@ function showTab(id,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
 }
 
 function openFormModal(tipo){
@@ -1062,6 +1112,21 @@ async function syncSilencioso(){
 
 Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]).then(()=>{iniciarFiltroMes();abrirTodosOsCaminhoes();});
 setInterval(syncSilencioso, 5000);
+
+function abrirDrawer(){
+  document.getElementById('nav-drawer').classList.add('open');
+  document.getElementById('nav-overlay').classList.add('open');
+}
+function fecharDrawer(){
+  document.getElementById('nav-drawer').classList.remove('open');
+  document.getElementById('nav-overlay').classList.remove('open');
+}
+function showTabMobile(id,btn){
+  showTab(id,null);
+  document.querySelectorAll('.nav-drawer-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  fecharDrawer();
+}
 
 function toggleDark(){
   const dark=document.body.classList.toggle('dark');

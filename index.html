@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>FSB Transportes</title>
-<link rel="icon" type="image/png" href="logo.png" />
+<link rel="icon" type="image/png" href="logos/fsb-logo.png" />
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#1a1a1a;background:#f5f4f0;min-height:100vh}
@@ -121,7 +121,7 @@ body.dark .subtitle{color:#888}
 <div id="login-screen" style="display:none;position:fixed;inset:0;background:#f5f4f0;z-index:9999;align-items:center;justify-content:center">
   <div style="background:#fff;border:1px solid #e8e5de;border-radius:12px;padding:2rem;width:min(90vw,360px);display:flex;flex-direction:column;gap:16px">
     <div style="text-align:center">
-      <img src="logo.png" alt="FSB Transportes" style="height:56px;width:auto;margin-bottom:4px" />
+      <img src="logos/fsb-logo.png" alt="FSB Transportes" style="height:56px;width:auto;margin-bottom:4px" />
       <div style="font-size:18px;font-weight:700;margin-top:4px">FSB Transportes</div>
       <div style="font-size:13px;color:#888;margin-top:4px">Digite a senha para continuar</div>
     </div>
@@ -136,7 +136,7 @@ body.dark .subtitle{color:#888}
 <div id="app-content" style="display:none">
 <div class="app">
   <div class="app-header">
-    <img src="logo.png" alt="FSB Transportes" />
+    <img src="logos/fsb-logo.png" alt="FSB Transportes" />
     <div>
       <h1 style="margin-bottom:2px">FSB Transportes</h1>
       <div class="subtitle" style="margin-bottom:0">Gestão de frota, motoristas e viagens</div>
@@ -225,13 +225,13 @@ body.dark .subtitle{color:#888}
         <label>Marca</label>
         <div id="marca-picker" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
           <div class="marca-opt" data-marca="Scania" onclick="selecionarMarca(this)">
-            <img src="logos/scania-logo.png" alt="Scania" /><span>Scania</span>
+            <img src="logos/scania-logos/fsb-logo.png" alt="Scania" /><span>Scania</span>
           </div>
           <div class="marca-opt" data-marca="Volvo" onclick="selecionarMarca(this)">
-            <img src="logos/volvo-logo.png" alt="Volvo" /><span>Volvo</span>
+            <img src="logos/volvo-logos/fsb-logo.png" alt="Volvo" /><span>Volvo</span>
           </div>
           <div class="marca-opt" data-marca="Volkswagen" onclick="selecionarMarca(this)">
-            <img src="logos/volkswagen-logo.png" alt="Volkswagen" /><span>Volkswagen</span>
+            <img src="logos/volkswagen-logos/fsb-logo.png" alt="Volkswagen" /><span>Volkswagen</span>
           </div>
           <div class="marca-opt" data-marca="Outra" onclick="selecionarMarca(this)">
             <span style="font-size:22px">🚛</span><span>Outra</span>
@@ -418,9 +418,9 @@ async function loadCaminhoes(){
 }
 
 const MARCA_LOGOS={
-  'Scania':'logos/scania-logo.png',
-  'Volvo':'logos/volvo-logo.png',
-  'Volkswagen':'logos/volkswagen-logo.png'
+  'Scania':'logos/scania-logos/fsb-logo.png',
+  'Volvo':'logos/volvo-logos/fsb-logo.png',
+  'Volkswagen':'logos/volkswagen-logos/fsb-logo.png'
 };
 
 function marcaIcon(marca){

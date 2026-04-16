@@ -544,7 +544,9 @@ function aplicarFiltro(){
 
 function fmtDataBR(iso){
   if(!iso) return '—';
-  const [y,m,d]=iso.split('-');
+  const s=iso.toString().slice(0,10);
+  const [y,m,d]=s.split('-');
+  if(!y||!m||!d) return iso;
   return `${d}/${m}/${y}`;
 }
 

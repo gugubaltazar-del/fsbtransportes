@@ -245,9 +245,8 @@ async function db(table,method='GET',body=null,query=''){
     'apikey':SUPA_KEY,
     'Authorization':'Bearer '+SUPA_KEY,
     'Content-Type':'application/json',
-    'Prefer':method==='POST'?'return=representation':''
+    'Prefer':method==='DELETE'?'return=minimal':'return=representation'
   };
-  if(method==='GET') headers['Accept']='application/json';
   const res=await fetch(url,{method,headers,body:body?JSON.stringify(body):null});
   if(!res.ok){const e=await res.text();throw new Error(e);}
   if(method==='DELETE') return null;

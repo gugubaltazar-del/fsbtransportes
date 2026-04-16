@@ -355,12 +355,27 @@ body.dark .subtitle{color:#888}
         <div class="field"><label>Nome da empresa</label><input id="e-nome" placeholder="Empresa ABC Ltda" /></div>
         <div class="field"><label>CNPJ</label><input id="e-cnpj" placeholder="00.000.000/0000-00" /></div>
       </div>
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Contato</label><input id="e-contato" placeholder="Nome do contato" /></div>
+        <div class="field"><label>Telefone</label><input id="e-tel" placeholder="(11) 99999-0000" /></div>
+      </div>
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Email</label><input id="e-email" placeholder="email@empresa.com" /></div>
+        <div class="field"><label>Endereço</label><input id="e-endereco" placeholder="Rua, número, cidade" /></div>
+      </div>
       <button class="btn-primary" id="btn-salvar-empresa" onclick="salvarEmpresa()">Salvar empresa</button>
     </div>
     <div id="form-carreta" style="display:none">
       <div class="grid2" style="margin-bottom:12px">
         <div class="field"><label>Placa do bug / carreta</label><input id="bug-placa" placeholder="XYZ-9876" /></div>
-        <div class="field"><label>Descrição</label><input id="bug-desc" placeholder="Semirreboque 40t" /></div>
+        <div class="field"><label>Tipo</label><select id="bug-tipo"><option value="">— selecione —</option><option>Semirreboque</option><option>Baú</option><option>Graneleiro</option><option>Tanque</option><option>Prancha</option><option>Frigorífico</option><option>Outro</option></select></div>
+      </div>
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Descrição</label><input id="bug-desc" placeholder="Ex: 40t, 12m" /></div>
+        <div class="field"><label>Ano</label><input id="bug-ano" type="number" placeholder="2020" /></div>
+      </div>
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Renavam</label><input id="bug-renavam" placeholder="00000000000" /></div>
       </div>
       <button class="btn-primary" id="btn-salvar-carreta" onclick="salvarCarreta()">Salvar carreta</button>
     </div>
@@ -484,8 +499,12 @@ function closeFormModal(){
   document.body.style.overflow='';
   editandoCaminhaoId=null;
   editandoMotoristaId=null;
+  editandoEmpresaId=null;
+  editandoCarretaId=null;
   document.getElementById('btn-salvar-caminhao').textContent='Salvar caminhão';
   document.getElementById('btn-salvar-motorista').textContent='Salvar motorista';
+  document.getElementById('btn-salvar-empresa').textContent='Salvar empresa';
+  document.getElementById('btn-salvar-carreta').textContent='Salvar carreta';
 }
 
 // ── CAMINHÕES ──
@@ -830,9 +849,36 @@ function renderEmpresas(){
   if(!arr.length){el.innerHTML='<div class="empty">Nenhuma cadastrada.</div>';return;}
   el.innerHTML=arr.map(e=>`
     <div class="list-item">
-      <div><div style="font-weight:500">${e.nome}</div><div style="font-size:11px;color:#888">${e.cnpj||''}</div></div>
-      <button class="btn-danger" onclick="removerEmpresa('${e.id}')">Remover</button>
+      <div>
+        <div style="font-weight:500">${e.nome}</div>
+        <div style="font-size:11px;color:#888">${[e.cnpj,e.telefone,e.email].filter(Boolean).join(' · ')}</div>
+        ${e.endereco?`<div style="font-size:11px;color:#aaa">${e.endereco}</div>`:''}
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn-primary" style="font-size:12px;padding:4px 10px" onclick="editarEmpresa('${e.id}')">Editar</button>
+        <button class="btn-danger" onclick="removerEmpresa('${e.id}')">Remover</button>
+      </div>
     </div>`).join('');
+}
+
+let editandoEmpresaId=null;
+
+function editarEmpresa(id){
+  const e=cache.empresas.find(x=>x.id===id);
+  if(!e) return;
+  editandoEmpresaId=id;
+  document.getElementById('e-nome').value=e.nome||'';
+  document.getElementById('e-cnpj').value=e.cnpj||'';
+  document.getElementById('e-tel').value=e.telefone||'';
+  document.getElementById('e-contato').value=e.contato||'';
+  document.getElementById('e-email').value=e.email||'';
+  document.getElementById('e-endereco').value=e.endereco||'';
+  document.getElementById('form-modal-title').textContent='Editar empresa';
+  document.getElementById('btn-salvar-empresa').textContent='Atualizar empresa';
+  ['caminhao','motorista','empresa','carreta'].forEach(t=>document.getElementById('form-'+t).style.display='none');
+  document.getElementById('form-empresa').style.display='block';
+  document.getElementById('form-modal').classList.add('open');
+  document.body.style.overflow='hidden';
 }
 
 async function salvarEmpresa(){
@@ -840,13 +886,24 @@ async function salvarEmpresa(){
   if(!nome) return toast('Informe o nome.',true);
   const btn=document.getElementById('btn-salvar-empresa');
   btn.disabled=true; btn.textContent='Salvando...';
+  const body={
+    nome,
+    cnpj:document.getElementById('e-cnpj').value.trim(),
+    contato:document.getElementById('e-contato').value.trim(),
+    telefone:document.getElementById('e-tel').value.trim(),
+    email:document.getElementById('e-email').value.trim(),
+    endereco:document.getElementById('e-endereco').value.trim()
+  };
   try{
-    await db('empresas','POST',{nome,cnpj:document.getElementById('e-cnpj').value.trim()});
-    document.getElementById('e-nome').value='';
-    document.getElementById('e-cnpj').value='';
+    if(editandoEmpresaId){
+      await db('empresas','PATCH',body,`?id=eq.${editandoEmpresaId}`);
+      toast('Empresa atualizada!');
+    } else {
+      await db('empresas','POST',body);
+      toast('Empresa salva!');
+    }
     await loadEmpresas();
     closeFormModal();
-    toast('Empresa salva!');
   }catch(e){toast('Erro ao salvar empresa.',true);}
   finally{btn.disabled=false; btn.textContent='Salvar empresa';}
 }
@@ -874,9 +931,34 @@ function renderCarretas(){
   if(!arr.length){el.innerHTML='<div class="empty">Nenhuma cadastrada.</div>';return;}
   el.innerHTML=arr.map(c=>`
     <div class="list-item">
-      <div><div style="font-weight:500">${c.placa}</div><div style="font-size:11px;color:#888">${c.descricao||''}</div></div>
-      <button class="btn-danger" onclick="removerCarreta('${c.id}')">Remover</button>
+      <div>
+        <div style="font-weight:500">${c.placa}${c.tipo?' — '+c.tipo:''}</div>
+        <div style="font-size:11px;color:#888">${[c.descricao,c.ano?'Ano: '+c.ano:'',c.renavam?'Renavam: '+c.renavam:''].filter(Boolean).join(' · ')}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn-primary" style="font-size:12px;padding:4px 10px" onclick="editarCarreta('${c.id}')">Editar</button>
+        <button class="btn-danger" onclick="removerCarreta('${c.id}')">Remover</button>
+      </div>
     </div>`).join('');
+}
+
+let editandoCarretaId=null;
+
+function editarCarreta(id){
+  const c=cache.carretas.find(x=>x.id===id);
+  if(!c) return;
+  editandoCarretaId=id;
+  document.getElementById('bug-placa').value=c.placa||'';
+  document.getElementById('bug-tipo').value=c.tipo||'';
+  document.getElementById('bug-desc').value=c.descricao||'';
+  document.getElementById('bug-ano').value=c.ano||'';
+  document.getElementById('bug-renavam').value=c.renavam||'';
+  document.getElementById('form-modal-title').textContent='Editar carreta';
+  document.getElementById('btn-salvar-carreta').textContent='Atualizar carreta';
+  ['caminhao','motorista','empresa','carreta'].forEach(t=>document.getElementById('form-'+t).style.display='none');
+  document.getElementById('form-carreta').style.display='block';
+  document.getElementById('form-modal').classList.add('open');
+  document.body.style.overflow='hidden';
 }
 
 async function salvarCarreta(){
@@ -884,13 +966,23 @@ async function salvarCarreta(){
   if(!placa) return toast('Informe a placa.',true);
   const btn=document.getElementById('btn-salvar-carreta');
   btn.disabled=true; btn.textContent='Salvando...';
+  const body={
+    placa,
+    tipo:document.getElementById('bug-tipo').value,
+    descricao:document.getElementById('bug-desc').value.trim(),
+    ano:document.getElementById('bug-ano').value?parseInt(document.getElementById('bug-ano').value):null,
+    renavam:document.getElementById('bug-renavam').value.trim()
+  };
   try{
-    await db('carretas','POST',{placa,descricao:document.getElementById('bug-desc').value.trim()});
-    document.getElementById('bug-placa').value='';
-    document.getElementById('bug-desc').value='';
+    if(editandoCarretaId){
+      await db('carretas','PATCH',body,`?id=eq.${editandoCarretaId}`);
+      toast('Carreta atualizada!');
+    } else {
+      await db('carretas','POST',body);
+      toast('Carreta salva!');
+    }
     await loadCarretas();
     closeFormModal();
-    toast('Carreta salva!');
   }catch(e){toast('Erro ao salvar carreta.',true);}
   finally{btn.disabled=false; btn.textContent='Salvar carreta';}
 }

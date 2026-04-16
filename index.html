@@ -823,7 +823,7 @@ async function renderModalTrips(){
     if(!viagens.length){el.innerHTML='<div class="empty">Nenhuma viagem registrada.</div>';return;}
     el.innerHTML=`<div class="modal-inner-scroll"><table class="trip-table">
       <thead><tr>
-        <th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Obs.</th><th></th>
+        <th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
       </tr></thead>
       <tbody>${viagens.map(v=>`<tr>
         <td>${v.data||'—'}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
@@ -832,7 +832,7 @@ async function renderModalTrips(){
         <td>R$ ${(v.frete||0).toFixed(2).replace('.',',')}</td>
         <td>R$ ${(v.comissao||0).toFixed(2).replace('.',',')}</td>
         <td>R$ ${(v.abastecimento||0).toFixed(2).replace('.',',')}</td>
-        <td>${v.obs||'—'}</td>
+        <td>${v.litros||0} L</td><td>${v.obs||'—'}</td>
         <td style="display:flex;gap:4px">
           <button class="btn-danger" style="color:#C8171A" onclick="editarViagem('${v.id}')">✎</button>
           <button class="btn-danger" onclick="removerViagem('${v.id}')">&#x2715;</button>
@@ -911,7 +911,7 @@ async function loadTodasViagens(){
     cache.caminhoes.forEach(c=>placas[c.id]=c.placa);
     el.innerHTML=`<div class="modal-inner-scroll"><table class="trip-table">
       <thead><tr>
-        <th>Caminhão</th><th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Obs.</th><th></th>
+        <th>Caminhão</th><th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
       </tr></thead>
       <tbody>${viagens.map(v=>`<tr>
         <td><strong>${placas[v.caminhao_id]||'—'}</strong></td>
@@ -919,7 +919,7 @@ async function loadTodasViagens(){
         <td>${v.loc_carga||'—'}</td><td>${v.loc_dev||'—'}</td><td>${v.container||'—'}</td><td>${v.bug||'—'}</td>
         <td>${v.motorista||'—'}</td>
         <td>${fmt(v.frete)}</td><td>${fmt(v.comissao)}</td><td>${fmt(v.abastecimento)}</td>
-        <td>${v.obs||'—'}</td>
+        <td>${v.litros||0} L</td><td>${v.obs||'—'}</td>
         <td><button class="btn-danger" onclick="removerViagemGeral('${v.id}')">&#x2715;</button></td>
       </tr>`).join('')}</tbody>
     </table></div>`;

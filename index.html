@@ -335,8 +335,17 @@ body.dark .subtitle{color:#888}
       <div class="field"><label>Carreta / bug</label><select id="v-bug"><option value="">— selecione —</option></select></div>
     </div>
     <div class="grid3" style="margin-bottom:10px">
-      <div class="field"><label>Frete total (R$)</label><input type="number" id="v-frete" placeholder="0,00" oninput="document.getElementById('v-comissao').value=(parseFloat(this.value)||0)*0.15?((parseFloat(this.value)||0)*0.15).toFixed(2):''" /></div>
-      <div class="field"><label>Comissão (R$) <span style="font-weight:400;color:#aaa;font-size:10px">— 15% auto</span></label><input type="number" id="v-comissao" placeholder="0,00" /></div>
+      <div class="field"><label>Frete total (R$)</label><input type="number" id="v-frete" placeholder="0,00" oninput="calcComissaoAuto()" /></div>
+      <div class="field">
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>Comissão (R$)</span>
+          <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:#aaa;font-weight:400;cursor:pointer;text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="v-comissao-auto" checked onchange="toggleComissaoAuto(this)" style="accent-color:#C8171A;cursor:pointer" />
+            15% auto
+          </label>
+        </label>
+        <input type="number" id="v-comissao" placeholder="0,00" readonly style="opacity:.6;cursor:not-allowed" />
+      </div>
       <div class="field"><label>Abastecimento (R$)</label><input type="number" id="v-abastecimento" placeholder="0,00" /></div>
     </div>
     <div class="grid2" style="margin-bottom:16px">
@@ -903,6 +912,28 @@ async function removerViagem(id){
 
 let editandoViagemId=null;
 
+function calcComissaoAuto(){
+  if(document.getElementById('v-comissao-auto').checked){
+    const frete=parseFloat(document.getElementById('v-frete').value)||0;
+    document.getElementById('v-comissao').value=frete?(frete*0.15).toFixed(2):'';
+  }
+}
+
+function toggleComissaoAuto(cb){
+  const input=document.getElementById('v-comissao');
+  if(cb.checked){
+    input.readOnly=true;
+    input.style.opacity='.6';
+    input.style.cursor='not-allowed';
+    calcComissaoAuto();
+  } else {
+    input.readOnly=false;
+    input.style.opacity='1';
+    input.style.cursor='';
+    input.focus();
+  }
+}
+
 function openViagemModal(){
   editandoViagemId=null;
   document.getElementById('viagem-modal-title').textContent='Adicionar viagem';
@@ -911,6 +942,9 @@ function openViagemModal(){
   document.getElementById('v-empresa').value='';
   document.getElementById('v-motorista').value='';
   document.getElementById('v-bug').value='';
+  // reset comissão auto
+  const cb=document.getElementById('v-comissao-auto');
+  cb.checked=true; toggleComissaoAuto(cb);
   populateSelects();
   document.getElementById('viagem-modal').classList.add('open');
 }
@@ -922,6 +956,8 @@ function editarViagem(id){
   editandoViagemId=id;
   document.getElementById('viagem-modal-title').textContent='Editar viagem';
   document.getElementById('btn-salvar-viagem').textContent='Salvar alterações';
+  const cb=document.getElementById('v-comissao-auto');
+  cb.checked=false; toggleComissaoAuto(cb);
   populateSelects();
   document.getElementById('v-data').value=v.data||'';
   document.getElementById('v-empresa').value=v.empresa||'';

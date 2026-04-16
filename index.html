@@ -453,6 +453,7 @@ function showTab(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   if(btn) btn.classList.add('active');
+  localStorage.setItem('fsb-tab',id);
 }
 
 function openFormModal(tipo){
@@ -1122,7 +1123,13 @@ async function syncSilencioso(){
   }catch(e){}
 }
 
-Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]).then(()=>{iniciarFiltroMes();abrirTodosOsCaminhoes();});
+Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]).then(()=>{
+  iniciarFiltroMes();
+  const savedTab=localStorage.getItem('fsb-tab')||'caminhoes';
+  const navBtn=document.querySelector(`.nav-btn[onclick*="'${savedTab}'"]`);
+  showTab(savedTab,navBtn);
+  if(savedTab==='caminhoes') abrirTodosOsCaminhoes();
+});
 setInterval(syncSilencioso, 5000);
 
 function abrirDrawer(){
@@ -1137,6 +1144,7 @@ function showTabMobile(id,btn){
   showTab(id,null);
   document.querySelectorAll('.nav-drawer-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  if(id==='caminhoes') abrirTodosOsCaminhoes();
   fecharDrawer();
 }
 

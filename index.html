@@ -96,6 +96,7 @@ body.dark .nav-btn{color:#888}
 body.dark .nav-btn:hover{color:#e8e6e0;background:#252628}
 body.dark .nav-btn.active{color:#e8e6e0;border-bottom-color:#e04548}
 body.dark .field input,body.dark .field select,body.dark .field textarea{background:#252628;border-color:#3a3b3e;color:#e8e6e0}
+body.dark #filtro-de,body.dark #filtro-ate{background:#252628;border-color:#3a3b3e;color:#e8e6e0}
 body.dark .field input:focus,body.dark .field select:focus,body.dark .field textarea:focus{border-color:#e04548}
 body.dark .field label{color:#999}
 body.dark .list-item{border-bottom-color:#2e2f31}
@@ -179,6 +180,17 @@ body.dark .subtitle{color:#888}
             <button class="btn-primary" onclick="openViagemModal()">+ Adicionar viagem</button>
             <button class="close-btn" onclick="fecharFrotaPainel()" style="font-size:16px">&#x2715;</button>
           </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+          <div class="field" style="margin:0;flex-direction:row;align-items:center;gap:6px">
+            <label style="white-space:nowrap;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">De</label>
+            <input type="date" id="filtro-de" onchange="aplicarFiltro()" style="padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a1a" />
+          </div>
+          <div class="field" style="margin:0;flex-direction:row;align-items:center;gap:6px">
+            <label style="white-space:nowrap;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Até</label>
+            <input type="date" id="filtro-ate" onchange="aplicarFiltro()" style="padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a1a" />
+          </div>
+          <button onclick="resetarFiltroMes()" style="padding:5px 12px;border:1px solid #ddd;border-radius:6px;font-size:12px;background:none;cursor:pointer;color:#888">Mês atual</button>
         </div>
         <div class="summary-row" id="frota-summary"></div>
         <div id="frota-trips"><div class="loading">Carregando viagens...</div></div>
@@ -455,6 +467,31 @@ function renderTruckGrid(){
     </div>`).join('');
 }
 
+function iniciarFiltroMes(){
+  const hoje=new Date();
+  const ini=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  const fim=new Date(hoje.getFullYear(),hoje.getMonth()+1,0);
+  const fmt=d=>d.toISOString().slice(0,10);
+  document.getElementById('filtro-de').value=fmt(ini);
+  document.getElementById('filtro-ate').value=fmt(fim);
+}
+
+function resetarFiltroMes(){
+  iniciarFiltroMes();
+  aplicarFiltro();
+}
+
+function aplicarFiltro(){
+  if(currentTruck) renderModalTrips();
+  else abrirTodosOsCaminhoes();
+}
+
+function fmtDataBR(iso){
+  if(!iso) return '—';
+  const [y,m,d]=iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 async function abrirTodosOsCaminhoes(){
   currentTruck=null;
   document.getElementById('frota-painel-titulo').textContent='Todas as viagens';
@@ -462,13 +499,16 @@ async function abrirTodosOsCaminhoes(){
   document.querySelectorAll('.truck-card').forEach(c=>c.classList.remove('selected-truck'));
   document.getElementById('card-todos').classList.add('selected-truck');
   document.getElementById('frota-painel').style.display='block';
-  document.getElementById('frota-painel').scrollIntoView({behavior:'smooth',block:'nearest'});
-  // Esconde botão adicionar viagem (sem caminhão selecionado)
   document.querySelector('#frota-painel .btn-primary').style.display='none';
+  const de=document.getElementById('filtro-de').value;
+  const ate=document.getElementById('filtro-ate').value;
+  let query='?order=data.desc';
+  if(de) query+=`&data=gte.${de}`;
+  if(ate) query+=`&data=lte.${ate}`;
   const el=document.getElementById('frota-trips');
   el.innerHTML='<div class="loading">Carregando viagens...</div>';
   try{
-    const viagens=await db('viagens','GET',null,'?order=data.desc')||[];
+    const viagens=await db('viagens','GET',null,query)||[];
     const fmt=n=>'R$ '+(n||0).toFixed(2).replace('.',',');
     const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
     const sumComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
@@ -492,7 +532,7 @@ async function abrirTodosOsCaminhoes(){
       </tr></thead>
       <tbody>${viagens.map(v=>`<tr>
         <td><strong>${placas[v.caminhao_id]||'—'}</strong></td>
-        <td>${v.data||'—'}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
+        <td>${fmtDataBR(v.data)}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
         <td>${v.loc_carga||'—'}</td><td>${v.loc_dev||'—'}</td><td>${v.container||'—'}</td><td>${v.bug||'—'}</td>
         <td>${v.motorista||'—'}</td>
         <td>${fmt(v.frete)}</td><td>${fmt(v.pedagios)}</td><td>${fmt(v.abastecimento)}</td><td>${fmt(v.comissao)}</td>
@@ -874,7 +914,12 @@ async function renderModalTrips(){
   const el=document.getElementById('frota-trips');
   el.innerHTML='<div class="loading">Carregando viagens...</div>';
   try{
-    const viagens=await db('viagens','GET',null,`?caminhao_id=eq.${currentTruck.id}&order=data.asc`)||[];
+    const de=document.getElementById('filtro-de').value;
+    const ate=document.getElementById('filtro-ate').value;
+    let q=`?caminhao_id=eq.${currentTruck.id}&order=data.desc`;
+    if(de) q+=`&data=gte.${de}`;
+    if(ate) q+=`&data=lte.${ate}`;
+    const viagens=await db('viagens','GET',null,q)||[];
     window._viagensCache=viagens;
     const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
     const sumComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
@@ -896,7 +941,7 @@ async function renderModalTrips(){
         <th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Pedágios</th><th>Abastec.</th><th>Comissão</th><th>Total</th><th>Litros</th><th>Obs.</th><th></th>
       </tr></thead>
       <tbody>${viagens.map(v=>`<tr>
-        <td>${v.data||'—'}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
+        <td>${fmtDataBR(v.data)}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
         <td>${v.loc_carga||'—'}</td><td>${v.loc_dev||'—'}</td><td>${v.container||'—'}</td><td>${v.bug||'—'}</td>
         <td>${v.motorista||'—'}</td>
         <td>R$ ${(v.frete||0).toFixed(2).replace('.',',')}</td>
@@ -1019,7 +1064,7 @@ async function syncSilencioso(){
   }catch(e){}
 }
 
-Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]).then(()=>abrirTodosOsCaminhoes());
+Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]).then(()=>{iniciarFiltroMes();abrirTodosOsCaminhoes();});
 setInterval(syncSilencioso, 5000);
 
 function toggleDark(){

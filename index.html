@@ -229,37 +229,47 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
       <button class="close-btn" onclick="closeModal()">&#x2715;</button>
     </div>
     <div class="summary-row" id="modal-summary"></div>
-    <div class="card" style="margin-bottom:1rem;background:#faf9f6">
-      <div class="card-title">Adicionar viagem</div>
-      <div class="grid3" style="margin-bottom:10px">
-        <div class="field"><label>Data</label><input type="date" id="v-data" /></div>
-        <div class="field"><label>Empresa</label><select id="v-empresa"><option value="">— selecione —</option></select></div>
-        <div class="field"><label>Motorista</label><select id="v-motorista"><option value="">— selecione —</option></select></div>
-      </div>
-      <div class="grid3" style="margin-bottom:10px">
-        <div class="field"><label>Origem</label><input id="v-origem" placeholder="São Paulo" /></div>
-        <div class="field"><label>Destino</label><input id="v-destino" placeholder="Campinas" /></div>
-        <div class="field"><label>Local de carregamento</label><input id="v-loc-carga" placeholder="Porto X" /></div>
-      </div>
-      <div class="grid3" style="margin-bottom:10px">
-        <div class="field"><label>Local de devolução</label><input id="v-loc-dev" placeholder="Terminal Y" /></div>
-        <div class="field"><label>Tamanho container</label>
-          <select id="v-container"><option>20'</option><option>40'</option><option>40' HC</option><option>Outro</option></select>
-        </div>
-        <div class="field"><label>Carreta / bug</label><select id="v-bug"><option value="">— selecione —</option></select></div>
-      </div>
-      <div class="grid3" style="margin-bottom:10px">
-        <div class="field"><label>Frete total (R$)</label><input type="number" id="v-frete" placeholder="0,00" /></div>
-        <div class="field"><label>Comissão (R$)</label><input type="number" id="v-comissao" placeholder="0,00" /></div>
-        <div class="field"><label>Abastecimento (R$)</label><input type="number" id="v-abastecimento" placeholder="0,00" /></div>
-      </div>
-      <div class="grid2" style="margin-bottom:10px">
-        <div class="field"><label>Qtd. abastecimento (litros)</label><input type="number" id="v-litros" placeholder="0" /></div>
-        <div class="field"><label>Observação</label><input id="v-obs" placeholder="Opcional" /></div>
-      </div>
-      <button class="btn-primary" id="btn-salvar-viagem" onclick="salvarViagem()">Adicionar viagem</button>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+      <button class="btn-primary" onclick="openViagemModal()">+ Adicionar viagem</button>
     </div>
     <div id="modal-trips"><div class="loading">Carregando viagens...</div></div>
+  </div>
+</div>
+
+<!-- MODAL ADICIONAR VIAGEM -->
+<div class="modal-bg" id="viagem-modal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title">Adicionar viagem</div>
+      <button class="close-btn" onclick="closeViagemModal()">&#x2715;</button>
+    </div>
+    <div class="grid3" style="margin-bottom:10px">
+      <div class="field"><label>Data</label><input type="date" id="v-data" /></div>
+      <div class="field"><label>Empresa</label><select id="v-empresa"><option value="">— selecione —</option></select></div>
+      <div class="field"><label>Motorista</label><select id="v-motorista"><option value="">— selecione —</option></select></div>
+    </div>
+    <div class="grid3" style="margin-bottom:10px">
+      <div class="field"><label>Origem</label><input id="v-origem" placeholder="São Paulo" /></div>
+      <div class="field"><label>Destino</label><input id="v-destino" placeholder="Campinas" /></div>
+      <div class="field"><label>Local de carregamento</label><input id="v-loc-carga" placeholder="Porto X" /></div>
+    </div>
+    <div class="grid3" style="margin-bottom:10px">
+      <div class="field"><label>Local de devolução</label><input id="v-loc-dev" placeholder="Terminal Y" /></div>
+      <div class="field"><label>Tamanho container</label>
+        <select id="v-container"><option>20'</option><option>40'</option><option>40' HC</option><option>Outro</option></select>
+      </div>
+      <div class="field"><label>Carreta / bug</label><select id="v-bug"><option value="">— selecione —</option></select></div>
+    </div>
+    <div class="grid3" style="margin-bottom:10px">
+      <div class="field"><label>Frete total (R$)</label><input type="number" id="v-frete" placeholder="0,00" /></div>
+      <div class="field"><label>Comissão (R$)</label><input type="number" id="v-comissao" placeholder="0,00" /></div>
+      <div class="field"><label>Abastecimento (R$)</label><input type="number" id="v-abastecimento" placeholder="0,00" /></div>
+    </div>
+    <div class="grid2" style="margin-bottom:16px">
+      <div class="field"><label>Qtd. abastecimento (litros)</label><input type="number" id="v-litros" placeholder="0" /></div>
+      <div class="field"><label>Observação</label><input id="v-obs" placeholder="Opcional" /></div>
+    </div>
+    <button class="btn-primary" id="btn-salvar-viagem" onclick="salvarViagem()">Adicionar viagem</button>
   </div>
 </div>
 
@@ -633,6 +643,7 @@ async function salvarViagem(){
     document.getElementById('v-empresa').value='';
     document.getElementById('v-motorista').value='';
     document.getElementById('v-bug').value='';
+    closeViagemModal();
     await renderModalTrips();
     toast('Viagem adicionada!');
   }catch(e){toast('Erro ao salvar viagem.',true);}
@@ -685,8 +696,18 @@ async function removerViagem(id){
   }catch(e){toast('Erro ao remover viagem.',true);}
 }
 
+function openViagemModal(){
+  populateSelects();
+  document.getElementById('viagem-modal').classList.add('open');
+}
+
+function closeViagemModal(){
+  document.getElementById('viagem-modal').classList.remove('open');
+}
+
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.getElementById('form-modal').addEventListener('click',function(e){if(e.target===this)closeFormModal();});
+document.getElementById('viagem-modal').addEventListener('click',function(e){if(e.target===this)closeViagemModal();});
 
 async function loadTodasViagens(){
   const el=document.getElementById('todas-viagens-container');

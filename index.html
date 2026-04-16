@@ -43,7 +43,7 @@ h1{font-size:20px;font-weight:600;margin-bottom:2px}
 .truck-sub{font-size:12px;color:#888;margin-top:2px}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto}
 .modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:12px;padding:1.5rem;width:min(98vw,900px);border:1px solid #e8e5de;margin:auto}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:min(98vw,900px);border:1px solid #e8e5de;margin:auto;overflow:hidden}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
 .modal-title{font-size:16px;font-weight:700}
 .close-btn{background:none;border:none;cursor:pointer;font-size:20px;color:#888;line-height:1;padding:2px 6px;border-radius:5px}
@@ -289,7 +289,7 @@ body.dark .subtitle{color:#888}
 <div class="modal-bg" id="viagem-modal">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
-      <div class="modal-title">Adicionar viagem</div>
+      <div class="modal-title" id="viagem-modal-title">Adicionar viagem</div>
       <button class="close-btn" onclick="closeViagemModal()">&#x2715;</button>
     </div>
     <div class="grid3" style="margin-bottom:10px">
@@ -671,34 +671,35 @@ function populateSelects(){
 async function salvarViagem(){
   if(!currentTruck) return;
   const btn=document.getElementById('btn-salvar-viagem');
+  const isEdit=!!editandoViagemId;
   btn.disabled=true; btn.textContent='Salvando...';
+  const body={
+    data:document.getElementById('v-data').value,
+    empresa:document.getElementById('v-empresa').value,
+    motorista:document.getElementById('v-motorista').value,
+    origem:document.getElementById('v-origem').value,
+    destino:document.getElementById('v-destino').value,
+    loc_carga:document.getElementById('v-loc-carga').value,
+    loc_dev:document.getElementById('v-loc-dev').value,
+    container:document.getElementById('v-container').value,
+    bug:document.getElementById('v-bug').value,
+    frete:parseFloat(document.getElementById('v-frete').value)||0,
+    comissao:parseFloat(document.getElementById('v-comissao').value)||0,
+    abastecimento:parseFloat(document.getElementById('v-abastecimento').value)||0,
+    litros:parseFloat(document.getElementById('v-litros').value)||0,
+    obs:document.getElementById('v-obs').value
+  };
   try{
-    await db('viagens','POST',{
-      caminhao_id:currentTruck.id,
-      data:document.getElementById('v-data').value,
-      empresa:document.getElementById('v-empresa').value,
-      motorista:document.getElementById('v-motorista').value,
-      origem:document.getElementById('v-origem').value,
-      destino:document.getElementById('v-destino').value,
-      loc_carga:document.getElementById('v-loc-carga').value,
-      loc_dev:document.getElementById('v-loc-dev').value,
-      container:document.getElementById('v-container').value,
-      bug:document.getElementById('v-bug').value,
-      frete:parseFloat(document.getElementById('v-frete').value)||0,
-      comissao:parseFloat(document.getElementById('v-comissao').value)||0,
-      abastecimento:parseFloat(document.getElementById('v-abastecimento').value)||0,
-      litros:parseFloat(document.getElementById('v-litros').value)||0,
-      obs:document.getElementById('v-obs').value
-    });
-    ['v-data','v-origem','v-destino','v-loc-carga','v-loc-dev','v-frete','v-comissao','v-abastecimento','v-litros','v-obs'].forEach(f=>document.getElementById(f).value='');
-    document.getElementById('v-empresa').value='';
-    document.getElementById('v-motorista').value='';
-    document.getElementById('v-bug').value='';
+    if(isEdit){
+      await db('viagens','PATCH',body,`?id=eq.${editandoViagemId}`);
+    } else {
+      await db('viagens','POST',{...body,caminhao_id:currentTruck.id});
+    }
     closeViagemModal();
     await renderModalTrips();
-    toast('Viagem adicionada!');
+    toast(isEdit?'Viagem atualizada!':'Viagem adicionada!');
   }catch(e){toast('Erro ao salvar viagem.',true);}
-  finally{btn.disabled=false; btn.textContent='Adicionar viagem';}
+  finally{btn.disabled=false; btn.textContent=isEdit?'Salvar alterações':'Adicionar viagem';}
 }
 
 async function renderModalTrips(){
@@ -707,6 +708,7 @@ async function renderModalTrips(){
   el.innerHTML='<div class="loading">Carregando viagens...</div>';
   try{
     const viagens=await db('viagens','GET',null,`?caminhao_id=eq.${currentTruck.id}&order=data.asc`)||[];
+    window._viagensCache=viagens;
     const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
     const sumComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
     const sumAb=viagens.reduce((a,v)=>a+(v.abastecimento||0),0);
@@ -720,7 +722,7 @@ async function renderModalTrips(){
       <div class="summary-card"><div class="summary-label">Litros total</div><div class="summary-value">${sumLitros.toFixed(0)} L</div></div>
     `;
     if(!viagens.length){el.innerHTML='<div class="empty">Nenhuma viagem registrada.</div>';return;}
-    el.innerHTML=`<div style="overflow-x:auto"><table class="trip-table">
+    el.innerHTML=`<div style="overflow-x:auto;margin:0 -1.5rem;padding:0 1.5rem"><table class="trip-table">
       <thead><tr>
         <th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
       </tr></thead>
@@ -732,7 +734,10 @@ async function renderModalTrips(){
         <td>R$ ${(v.comissao||0).toFixed(2).replace('.',',')}</td>
         <td>R$ ${(v.abastecimento||0).toFixed(2).replace('.',',')}</td>
         <td>${v.litros||0} L</td><td>${v.obs||'—'}</td>
-        <td><button class="btn-danger" onclick="removerViagem('${v.id}')">&#x2715;</button></td>
+        <td style="display:flex;gap:4px">
+          <button class="btn-danger" style="color:#C8171A" onclick="editarViagem('${v.id}')">✎</button>
+          <button class="btn-danger" onclick="removerViagem('${v.id}')">&#x2715;</button>
+        </td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   }catch(e){el.innerHTML='<div class="empty">Erro ao carregar viagens.</div>';}
@@ -747,13 +752,48 @@ async function removerViagem(id){
   }catch(e){toast('Erro ao remover viagem.',true);}
 }
 
+let editandoViagemId=null;
+
 function openViagemModal(){
+  editandoViagemId=null;
+  document.getElementById('viagem-modal-title').textContent='Adicionar viagem';
+  document.getElementById('btn-salvar-viagem').textContent='Adicionar viagem';
+  ['v-data','v-origem','v-destino','v-loc-carga','v-loc-dev','v-frete','v-comissao','v-abastecimento','v-litros','v-obs'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('v-empresa').value='';
+  document.getElementById('v-motorista').value='';
+  document.getElementById('v-bug').value='';
   populateSelects();
+  document.getElementById('viagem-modal').classList.add('open');
+}
+
+function editarViagem(id){
+  const viagens=window._viagensCache||[];
+  const v=viagens.find(x=>x.id===id);
+  if(!v) return;
+  editandoViagemId=id;
+  document.getElementById('viagem-modal-title').textContent='Editar viagem';
+  document.getElementById('btn-salvar-viagem').textContent='Salvar alterações';
+  populateSelects();
+  document.getElementById('v-data').value=v.data||'';
+  document.getElementById('v-empresa').value=v.empresa||'';
+  document.getElementById('v-motorista').value=v.motorista||'';
+  document.getElementById('v-origem').value=v.origem||'';
+  document.getElementById('v-destino').value=v.destino||'';
+  document.getElementById('v-loc-carga').value=v.loc_carga||'';
+  document.getElementById('v-loc-dev').value=v.loc_dev||'';
+  document.getElementById('v-container').value=v.container||"40'";
+  document.getElementById('v-bug').value=v.bug||'';
+  document.getElementById('v-frete').value=v.frete||0;
+  document.getElementById('v-comissao').value=v.comissao||0;
+  document.getElementById('v-abastecimento').value=v.abastecimento||0;
+  document.getElementById('v-litros').value=v.litros||0;
+  document.getElementById('v-obs').value=v.obs||'';
   document.getElementById('viagem-modal').classList.add('open');
 }
 
 function closeViagemModal(){
   document.getElementById('viagem-modal').classList.remove('open');
+  editandoViagemId=null;
 }
 
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});

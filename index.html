@@ -481,7 +481,7 @@ async function abrirTodosOsCaminhoes(){
       <div class="summary-card"><div class="summary-label">Pedágios</div><div class="summary-value" style="font-size:15px">${fmt(sumPedagios)}</div></div>
       <div class="summary-card"><div class="summary-label">Abastecimento</div><div class="summary-value" style="font-size:15px">${fmt(sumAb)}</div></div>
       <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
-      <div class="summary-card"><div class="summary-label">Total</div><div class="summary-value" style="font-size:15px;color:#C8171A">${fmt(sumTotal)}</div></div>
+      <div class="summary-card"><div class="summary-label">Total</div><div class="summary-value" style="font-size:15px;color:${sumTotal>=0?'#22a05a':'#C8171A'}">${fmt(sumTotal)}</div></div>
     `;
     if(!viagens.length){el.innerHTML='<div class="empty" style="padding:1.5rem 0">Nenhuma viagem registrada.</div>';return;}
     const placas={};
@@ -888,7 +888,7 @@ async function renderModalTrips(){
       <div class="summary-card"><div class="summary-label">Pedágios</div><div class="summary-value" style="font-size:15px">${fmt(sumPedagios)}</div></div>
       <div class="summary-card"><div class="summary-label">Abastecimento</div><div class="summary-value" style="font-size:15px">${fmt(sumAb)}</div></div>
       <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
-      <div class="summary-card"><div class="summary-label">Total</div><div class="summary-value" style="font-size:15px;color:#C8171A">${fmt(sumTotal)}</div></div>
+      <div class="summary-card"><div class="summary-label">Total</div><div class="summary-value" style="font-size:15px;color:${sumTotal>=0?'#22a05a':'#C8171A'}">${fmt(sumTotal)}</div></div>
     `;
     if(!viagens.length){el.innerHTML='<div class="empty" style="padding:1.5rem 0">Nenhuma viagem registrada.</div>';return;}
     el.innerHTML=`<div class="table-scroll"><table class="trip-table">

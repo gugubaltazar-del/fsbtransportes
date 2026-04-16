@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Transportadora</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#1a1a1a;background:#f5f4f0;min-height:100vh}
+.app{max-width:1100px;margin:0 auto;padding:1.25rem}
+h1{font-size:20px;font-weight:600;margin-bottom:2px}
+.subtitle{font-size:12px;color:#888;margin-bottom:1.25rem}
+.nav{display:flex;gap:4px;border-bottom:1.5px solid #e0ddd5;margin-bottom:1.5rem;flex-wrap:wrap}
+.nav-btn{padding:8px 16px;border:none;background:none;cursor:pointer;font-size:13px;color:#888;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;border-radius:4px 4px 0 0;transition:all .15s}
+.nav-btn:hover{color:#1a1a1a;background:#edebe5}
+.nav-btn.active{color:#1a1a1a;border-bottom:2.5px solid #533AB7;font-weight:600}
+.tab{display:none}.tab.active{display:block}
+.card{background:#fff;border:1px solid #e8e5de;border-radius:10px;padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:14px;font-weight:600;margin-bottom:1rem;color:#1a1a1a}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.4px}
+.field input,.field select,.field textarea{padding:7px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#1a1a1a;font-size:13px;font-family:inherit;outline:none;transition:border .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#533AB7}
+.field textarea{resize:vertical;min-height:64px}
+.btn-primary{padding:8px 18px;background:#533AB7;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600}
+.btn-primary:hover{background:#3C2489}
+.btn-primary:disabled{background:#aaa;cursor:not-allowed}
+.btn-danger{padding:4px 9px;background:none;border:1px solid #ddd;border-radius:5px;cursor:pointer;font-size:12px;color:#a32d2d}
+.btn-danger:hover{background:#fcebeb;border-color:#f09595}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0ede5}
+.list-item:last-child{border-bottom:none}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:#f0ede5;color:#666}
+.truck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.truck-card{background:#fff;border:1px solid #e8e5de;border-radius:10px;padding:1rem;cursor:pointer;transition:all .15s;text-align:center}
+.truck-card:hover{border-color:#533AB7;box-shadow:0 2px 8px rgba(83,58,183,.1)}
+.truck-icon{font-size:30px;margin-bottom:8px}
+.truck-plate{font-size:15px;font-weight:700;letter-spacing:1px}
+.truck-sub{font-size:12px;color:#888;margin-top:2px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:min(98vw,900px);border:1px solid #e8e5de;margin:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.modal-title{font-size:16px;font-weight:700}
+.close-btn{background:none;border:none;cursor:pointer;font-size:20px;color:#888;line-height:1;padding:2px 6px;border-radius:5px}
+.close-btn:hover{background:#f0ede5;color:#1a1a1a}
+.trip-table{width:100%;border-collapse:collapse;font-size:12px}
+.trip-table th{text-align:left;padding:7px 9px;background:#f5f4f0;color:#888;font-weight:600;font-size:11px;white-space:nowrap;border-bottom:1px solid #e8e5de}
+.trip-table td{padding:8px 9px;border-bottom:1px solid #f0ede5;vertical-align:top;white-space:nowrap}
+.trip-table tr:last-child td{border-bottom:none}
+.trip-table tr:hover td{background:#faf9f6}
+.summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem}
+.summary-card{background:#f5f4f0;border-radius:8px;padding:.75rem 1rem;flex:1;min-width:110px}
+.summary-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.summary-value{font-size:17px;font-weight:700}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.empty{text-align:center;padding:2rem;color:#aaa;font-size:13px}
+.loading{text-align:center;padding:2rem;color:#aaa;font-size:13px}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1a1a1a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.error{background:#a32d2d}
+@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.truck-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🚛 Transportadora</h1>
+  <div class="subtitle">Gestão de frota, motoristas e viagens</div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showTab('caminhoes',this)">Frota</button>
+    <button class="nav-btn" onclick="showTab('cad-caminhao',this)">Caminhões</button>
+    <button class="nav-btn" onclick="showTab('cad-motorista',this)">Motoristas</button>
+    <button class="nav-btn" onclick="showTab('cad-empresa',this)">Empresas</button>
+    <button class="nav-btn" onclick="showTab('cad-carreta',this)">Carretas / Bug</button>
+  </div>
+
+  <div id="tab-caminhoes" class="tab active">
+    <div class="card">
+      <div class="section-header">
+        <span class="card-title" style="margin-bottom:0">Caminhões cadastrados</span>
+        <span class="badge" id="frota-count">—</span>
+      </div>
+      <div class="truck-grid" id="truck-grid"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <div id="tab-cad-caminhao" class="tab">
+    <div class="card">
+      <div class="section-header">
+        <span class="card-title" style="margin-bottom:0">Caminhões cadastrados</span>
+        <button class="btn-primary" onclick="openFormModal('caminhao')">+ Novo caminhão</button>
+      </div>
+      <div id="lista-caminhoes"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <div id="tab-cad-motorista" class="tab">
+    <div class="card">
+      <div class="section-header">
+        <span class="card-title" style="margin-bottom:0">Motoristas cadastrados</span>
+        <button class="btn-primary" onclick="openFormModal('motorista')">+ Novo motorista</button>
+      </div>
+      <div id="lista-motoristas"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <div id="tab-cad-empresa" class="tab">
+    <div class="card">
+      <div class="section-header">
+        <span class="card-title" style="margin-bottom:0">Empresas cadastradas</span>
+        <button class="btn-primary" onclick="openFormModal('empresa')">+ Nova empresa</button>
+      </div>
+      <div id="lista-empresas"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <div id="tab-cad-carreta" class="tab">
+    <div class="card">
+      <div class="section-header">
+        <span class="card-title" style="margin-bottom:0">Carretas / bugs cadastradas</span>
+        <button class="btn-primary" onclick="openFormModal('carreta')">+ Nova carreta</button>
+      </div>
+      <div id="lista-carretas"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP CADASTRO -->
+<div class="modal-bg" id="form-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title" id="form-modal-title">Novo cadastro</div>
+      <button class="close-btn" onclick="closeFormModal()">&#x2715;</button>
+    </div>
+    <div id="form-caminhao" style="display:none">
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Placa do caminhão</label><input id="c-placa" placeholder="ABC-1234" /></div>
+        <div class="field"><label>Modelo / Descrição</label><input id="c-modelo" placeholder="Volvo FH 460" /></div>
+      </div>
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Cor</label><input id="c-cor" placeholder="Branco" /></div>
+        <div class="field"><label>Ano</label><input id="c-ano" placeholder="2022" type="number" /></div>
+      </div>
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Renavam</label><input id="c-renavam" placeholder="00000000000" /></div>
+        <div class="field"><label>ANTT</label><input id="c-antt" placeholder="RNTRC 000000" /></div>
+      </div>
+      <button class="btn-primary" id="btn-salvar-caminhao" onclick="salvarCaminhao()">Salvar caminhão</button>
+    </div>
+    <div id="form-motorista" style="display:none">
+      <div style="display:flex;gap:16px;margin-bottom:12px;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div id="m-foto-preview" style="width:80px;height:80px;border-radius:50%;background:#f0ede5;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;cursor:pointer" onclick="document.getElementById('m-foto-input').click()">👤</div>
+          <span style="font-size:10px;color:#aaa;text-align:center">Clique para<br>adicionar foto</span>
+          <input type="file" id="m-foto-input" accept="image/*" style="display:none" onchange="previewFoto(this)" />
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+          <div class="grid2">
+            <div class="field"><label>Nome</label><input id="m-nome" placeholder="João Silva" /></div>
+            <div class="field"><label>CPF</label><input id="m-cpf" placeholder="000.000.000-00" /></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>Telefone</label><input id="m-tel" placeholder="(11) 99999-0000" /></div>
+            <div class="field"><label>Data de nascimento</label><input type="date" id="m-nasc" /></div>
+          </div>
+          <div class="field" style="max-width:50%">
+            <label>Data de início</label><input type="date" id="m-inicio" />
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-salvar-motorista" onclick="salvarMotorista()">Salvar motorista</button>
+    </div>
+    <div id="form-empresa" style="display:none">
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Nome da empresa</label><input id="e-nome" placeholder="Empresa ABC Ltda" /></div>
+        <div class="field"><label>CNPJ</label><input id="e-cnpj" placeholder="00.000.000/0000-00" /></div>
+      </div>
+      <button class="btn-primary" id="btn-salvar-empresa" onclick="salvarEmpresa()">Salvar empresa</button>
+    </div>
+    <div id="form-carreta" style="display:none">
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Placa do bug / carreta</label><input id="bug-placa" placeholder="XYZ-9876" /></div>
+        <div class="field"><label>Descrição</label><input id="bug-desc" placeholder="Semirreboque 40t" /></div>
+      </div>
+      <button class="btn-primary" id="btn-salvar-carreta" onclick="salvarCarreta()">Salvar carreta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RELATÓRIO -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Relatório</div>
+        <div style="font-size:12px;color:#888" id="modal-sub"></div>
+      </div>
+      <button class="close-btn" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="summary-row" id="modal-summary"></div>
+    <div class="card" style="margin-bottom:1rem;background:#faf9f6">
+      <div class="card-title">Adicionar viagem</div>
+      <div class="grid3" style="margin-bottom:10px">
+        <div class="field"><label>Data</label><input type="date" id="v-data" /></div>
+        <div class="field"><label>Empresa</label><select id="v-empresa"><option value="">— selecione —</option></select></div>
+        <div class="field"><label>Motorista</label><select id="v-motorista"><option value="">— selecione —</option></select></div>
+      </div>
+      <div class="grid3" style="margin-bottom:10px">
+        <div class="field"><label>Origem</label><input id="v-origem" placeholder="São Paulo" /></div>
+        <div class="field"><label>Destino</label><input id="v-destino" placeholder="Campinas" /></div>
+        <div class="field"><label>Local de carregamento</label><input id="v-loc-carga" placeholder="Porto X" /></div>
+      </div>
+      <div class="grid3" style="margin-bottom:10px">
+        <div class="field"><label>Local de devolução</label><input id="v-loc-dev" placeholder="Terminal Y" /></div>
+        <div class="field"><label>Tamanho container</label>
+          <select id="v-container"><option>20'</option><option>40'</option><option>40' HC</option><option>Outro</option></select>
+        </div>
+        <div class="field"><label>Carreta / bug</label><select id="v-bug"><option value="">— selecione —</option></select></div>
+      </div>
+      <div class="grid3" style="margin-bottom:10px">
+        <div class="field"><label>Frete total (R$)</label><input type="number" id="v-frete" placeholder="0,00" /></div>
+        <div class="field"><label>Comissão (R$)</label><input type="number" id="v-comissao" placeholder="0,00" /></div>
+        <div class="field"><label>Abastecimento (R$)</label><input type="number" id="v-abastecimento" placeholder="0,00" /></div>
+      </div>
+      <div class="grid2" style="margin-bottom:10px">
+        <div class="field"><label>Qtd. abastecimento (litros)</label><input type="number" id="v-litros" placeholder="0" /></div>
+        <div class="field"><label>Observação</label><input id="v-obs" placeholder="Opcional" /></div>
+      </div>
+      <button class="btn-primary" id="btn-salvar-viagem" onclick="salvarViagem()">Adicionar viagem</button>
+    </div>
+    <div id="modal-trips"><div class="loading">Carregando viagens...</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPA_URL='https://yielnuggcxknuwwblswe.supabase.co';
+const SUPA_KEY='sb_publishable_5dKCncCTeo0fkCIoKFlMdA_WAMgSzLW';
+
+async function db(table,method='GET',body=null,query=''){
+  const url=`${SUPA_URL}/rest/v1/${table}${query}`;
+  const headers={
+    'apikey':SUPA_KEY,
+    'Authorization':'Bearer '+SUPA_KEY,
+    'Content-Type':'application/json',
+    'Prefer':method==='POST'?'return=representation':''
+  };
+  if(method==='GET') headers['Accept']='application/json';
+  const res=await fetch(url,{method,headers,body:body?JSON.stringify(body):null});
+  if(!res.ok){const e=await res.text();throw new Error(e);}
+  if(method==='DELETE') return null;
+  const text=await res.text();
+  return text?JSON.parse(text):null;
+}
+
+let currentTruck=null;
+let cache={caminhoes:[],motoristas:[],empresas:[],carretas:[]};
+
+function toast(msg,error=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast show'+(error?' error':'');
+  setTimeout(()=>t.className='toast',2500);
+}
+
+function showTab(id,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function openFormModal(tipo){
+  const titles={caminhao:'Novo caminhão',motorista:'Novo motorista',empresa:'Nova empresa',carreta:'Nova carreta / bug'};
+  document.getElementById('form-modal-title').textContent=titles[tipo];
+  ['caminhao','motorista','empresa','carreta'].forEach(t=>document.getElementById('form-'+t).style.display='none');
+  document.getElementById('form-'+tipo).style.display='block';
+  document.getElementById('form-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeFormModal(){
+  document.getElementById('form-modal').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// ── CAMINHÕES ──
+async function loadCaminhoes(){
+  try{
+    cache.caminhoes=await db('caminhoes','GET',null,'?order=created_at.asc')||[];
+    renderTruckGrid();
+    renderListaCaminhoes();
+  }catch(e){toast('Erro ao carregar caminhões',true);}
+}
+
+function renderTruckGrid(){
+  const g=document.getElementById('truck-grid');
+  const arr=cache.caminhoes;
+  document.getElementById('frota-count').textContent=arr.length+' caminhão'+(arr.length!==1?'ões':'');
+  if(!arr.length){g.innerHTML='<div class="empty">Nenhum caminhão cadastrado.</div>';return;}
+  g.innerHTML=arr.map((cam,i)=>`
+    <div class="truck-card" onclick="openModal(${i})">
+      <div class="truck-icon">🚛</div>
+      <div class="truck-plate">${cam.placa}</div>
+      <div class="truck-sub">${cam.modelo||'—'}</div>
+      <div style="margin-top:6px;font-size:11px;color:#aaa">${[cam.ano,cam.cor].filter(Boolean).join(' · ')}</div>
+    </div>`).join('');
+}
+
+function renderListaCaminhoes(){
+  const el=document.getElementById('lista-caminhoes');
+  const arr=cache.caminhoes;
+  if(!arr.length){el.innerHTML='<div class="empty">Nenhum cadastrado.</div>';return;}
+  el.innerHTML=arr.map(c=>`
+    <div class="list-item">
+      <div>
+        <div style="font-weight:500">${c.placa} <span style="font-weight:400;color:#888">— ${c.modelo||'—'}</span></div>
+        <div style="font-size:11px;color:#aaa">${[c.cor,c.ano,c.renavam?'Renavam: '+c.renavam:'',c.antt?'ANTT: '+c.antt:''].filter(Boolean).join(' · ')}</div>
+      </div>
+      <button class="btn-danger" onclick="removerCaminhao('${c.id}')">Remover</button>
+    </div>`).join('');
+}
+
+async function salvarCaminhao(){
+  const placa=document.getElementById('c-placa').value.trim();
+  if(!placa) return toast('Informe a placa.',true);
+  const btn=document.getElementById('btn-salvar-caminhao');
+  btn.disabled=true; btn.textContent='Salvando...';
+  try{
+    await db('caminhoes','POST',{
+      id:'c_'+Date.now(), placa,
+      modelo:document.getElementById('c-modelo').value.trim(),
+      cor:document.getElementById('c-cor').value.trim(),
+      ano:document.getElementById('c-ano').value.trim(),
+      renavam:document.getElementById('c-renavam').value.trim(),
+      antt:document.getElementById('c-antt').value.trim()
+    });
+    ['c-placa','c-modelo','c-cor','c-ano','c-renavam','c-antt'].forEach(f=>document.getElementById(f).value='');
+    await loadCaminhoes();
+    closeFormModal();
+    toast('Caminhão salvo!');
+  }catch(e){toast('Erro ao salvar caminhão.',true);}
+  finally{btn.disabled=false; btn.textContent='Salvar caminhão';}
+}
+
+async function removerCaminhao(id){
+  if(!confirm('Remover este caminhão? As viagens vinculadas também serão removidas.')) return;
+  try{
+    await db('viagens','DELETE',null,`?caminhao_id=eq.${id}`);
+    await db('caminhoes','DELETE',null,`?id=eq.${id}`);
+    await loadCaminhoes();
+    toast('Caminhão removido.');
+  }catch(e){toast('Erro ao remover.',true);}
+}
+
+// ── MOTORISTAS ──
+async function loadMotoristas(){
+  try{
+    cache.motoristas=await db('motoristas','GET',null,'?order=created_at.asc')||[];
+    renderMotoristas();
+  }catch(e){toast('Erro ao carregar motoristas',true);}
+}
+
+function renderMotoristas(){
+  const el=document.getElementById('lista-motoristas');
+  const arr=cache.motoristas;
+  if(!arr.length){el.innerHTML='<div class="empty">Nenhum cadastrado.</div>';return;}
+  el.innerHTML=arr.map(m=>`
+    <div class="list-item">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#f0ede5;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+          ${m.foto?`<img src="${m.foto}" style="width:100%;height:100%;object-fit:cover" />`:'👤'}
+        </div>
+        <div>
+          <div style="font-weight:500">${m.nome}</div>
+          <div style="font-size:11px;color:#888">${[m.cpf,m.tel].filter(Boolean).join(' · ')}</div>
+          <div style="font-size:11px;color:#aaa">${[m.nasc?'Nasc: '+m.nasc:'',m.inicio?'Início: '+m.inicio:''].filter(Boolean).join(' · ')}</div>
+        </div>
+      </div>
+      <button class="btn-danger" onclick="removerMotorista('${m.id}')">Remover</button>
+    </div>`).join('');
+}
+
+function previewFoto(input){
+  const file=input.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    document.getElementById('m-foto-preview').innerHTML=`<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function salvarMotorista(){
+  const nome=document.getElementById('m-nome').value.trim();
+  if(!nome) return toast('Informe o nome.',true);
+  const btn=document.getElementById('btn-salvar-motorista');
+  btn.disabled=true; btn.textContent='Salvando...';
+  const fotoInput=document.getElementById('m-foto-input');
+  let foto=null;
+  if(fotoInput.files[0]){
+    foto=await new Promise(res=>{
+      const r=new FileReader();
+      r.onload=e=>res(e.target.result);
+      r.readAsDataURL(fotoInput.files[0]);
+    });
+  }
+  try{
+    await db('motoristas','POST',{
+      id:'m_'+Date.now(), nome,
+      cpf:document.getElementById('m-cpf').value.trim(),
+      tel:document.getElementById('m-tel').value.trim(),
+      nasc:document.getElementById('m-nasc').value,
+      inicio:document.getElementById('m-inicio').value,
+      foto
+    });
+    ['m-nome','m-cpf','m-tel','m-nasc','m-inicio'].forEach(f=>document.getElementById(f).value='');
+    fotoInput.value='';
+    document.getElementById('m-foto-preview').innerHTML='👤';
+    await loadMotoristas();
+    closeFormModal();
+    toast('Motorista salvo!');
+  }catch(e){toast('Erro ao salvar motorista.',true);}
+  finally{btn.disabled=false; btn.textContent='Salvar motorista';}
+}
+
+async function removerMotorista(id){
+  if(!confirm('Remover este motorista?')) return;
+  try{
+    await db('motoristas','DELETE',null,`?id=eq.${id}`);
+    await loadMotoristas();
+    toast('Motorista removido.');
+  }catch(e){toast('Erro ao remover.',true);}
+}
+
+// ── EMPRESAS ──
+async function loadEmpresas(){
+  try{
+    cache.empresas=await db('empresas','GET',null,'?order=created_at.asc')||[];
+    renderEmpresas();
+  }catch(e){toast('Erro ao carregar empresas',true);}
+}
+
+function renderEmpresas(){
+  const el=document.getElementById('lista-empresas');
+  const arr=cache.empresas;
+  if(!arr.length){el.innerHTML='<div class="empty">Nenhuma cadastrada.</div>';return;}
+  el.innerHTML=arr.map(e=>`
+    <div class="list-item">
+      <div><div style="font-weight:500">${e.nome}</div><div style="font-size:11px;color:#888">${e.cnpj||''}</div></div>
+      <button class="btn-danger" onclick="removerEmpresa('${e.id}')">Remover</button>
+    </div>`).join('');
+}
+
+async function salvarEmpresa(){
+  const nome=document.getElementById('e-nome').value.trim();
+  if(!nome) return toast('Informe o nome.',true);
+  const btn=document.getElementById('btn-salvar-empresa');
+  btn.disabled=true; btn.textContent='Salvando...';
+  try{
+    await db('empresas','POST',{id:'e_'+Date.now(),nome,cnpj:document.getElementById('e-cnpj').value.trim()});
+    document.getElementById('e-nome').value='';
+    document.getElementById('e-cnpj').value='';
+    await loadEmpresas();
+    closeFormModal();
+    toast('Empresa salva!');
+  }catch(e){toast('Erro ao salvar empresa.',true);}
+  finally{btn.disabled=false; btn.textContent='Salvar empresa';}
+}
+
+async function removerEmpresa(id){
+  if(!confirm('Remover esta empresa?')) return;
+  try{
+    await db('empresas','DELETE',null,`?id=eq.${id}`);
+    await loadEmpresas();
+    toast('Empresa removida.');
+  }catch(e){toast('Erro ao remover.',true);}
+}
+
+// ── CARRETAS ──
+async function loadCarretas(){
+  try{
+    cache.carretas=await db('carretas','GET',null,'?order=created_at.asc')||[];
+    renderCarretas();
+  }catch(e){toast('Erro ao carregar carretas',true);}
+}
+
+function renderCarretas(){
+  const el=document.getElementById('lista-carretas');
+  const arr=cache.carretas;
+  if(!arr.length){el.innerHTML='<div class="empty">Nenhuma cadastrada.</div>';return;}
+  el.innerHTML=arr.map(c=>`
+    <div class="list-item">
+      <div><div style="font-weight:500">${c.placa}</div><div style="font-size:11px;color:#888">${c.descricao||''}</div></div>
+      <button class="btn-danger" onclick="removerCarreta('${c.id}')">Remover</button>
+    </div>`).join('');
+}
+
+async function salvarCarreta(){
+  const placa=document.getElementById('bug-placa').value.trim();
+  if(!placa) return toast('Informe a placa.',true);
+  const btn=document.getElementById('btn-salvar-carreta');
+  btn.disabled=true; btn.textContent='Salvando...';
+  try{
+    await db('carretas','POST',{id:'r_'+Date.now(),placa,descricao:document.getElementById('bug-desc').value.trim()});
+    document.getElementById('bug-placa').value='';
+    document.getElementById('bug-desc').value='';
+    await loadCarretas();
+    closeFormModal();
+    toast('Carreta salva!');
+  }catch(e){toast('Erro ao salvar carreta.',true);}
+  finally{btn.disabled=false; btn.textContent='Salvar carreta';}
+}
+
+async function removerCarreta(id){
+  if(!confirm('Remover esta carreta?')) return;
+  try{
+    await db('carretas','DELETE',null,`?id=eq.${id}`);
+    await loadCarretas();
+    toast('Carreta removida.');
+  }catch(e){toast('Erro ao remover.',true);}
+}
+
+// ── MODAL RELATÓRIO ──
+async function openModal(idx){
+  currentTruck=cache.caminhoes[idx];
+  document.getElementById('modal-title').textContent='Caminhão '+currentTruck.placa;
+  document.getElementById('modal-sub').textContent=currentTruck.modelo||'';
+  populateSelects();
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow='hidden';
+  await renderModalTrips();
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow='';
+  currentTruck=null;
+}
+
+function populateSelects(){
+  document.getElementById('v-empresa').innerHTML='<option value="">— selecione —</option>'+cache.empresas.map(e=>`<option>${e.nome}</option>`).join('');
+  document.getElementById('v-motorista').innerHTML='<option value="">— selecione —</option>'+cache.motoristas.map(m=>`<option>${m.nome}</option>`).join('');
+  document.getElementById('v-bug').innerHTML='<option value="">— selecione —</option>'+cache.carretas.map(c=>`<option>${c.placa}</option>`).join('');
+}
+
+async function salvarViagem(){
+  if(!currentTruck) return;
+  const btn=document.getElementById('btn-salvar-viagem');
+  btn.disabled=true; btn.textContent='Salvando...';
+  try{
+    await db('viagens','POST',{
+      id:'v_'+Date.now(),
+      caminhao_id:currentTruck.id,
+      data:document.getElementById('v-data').value,
+      empresa:document.getElementById('v-empresa').value,
+      motorista:document.getElementById('v-motorista').value,
+      origem:document.getElementById('v-origem').value,
+      destino:document.getElementById('v-destino').value,
+      loc_carga:document.getElementById('v-loc-carga').value,
+      loc_dev:document.getElementById('v-loc-dev').value,
+      container:document.getElementById('v-container').value,
+      bug:document.getElementById('v-bug').value,
+      frete:parseFloat(document.getElementById('v-frete').value)||0,
+      comissao:parseFloat(document.getElementById('v-comissao').value)||0,
+      abastecimento:parseFloat(document.getElementById('v-abastecimento').value)||0,
+      litros:parseFloat(document.getElementById('v-litros').value)||0,
+      obs:document.getElementById('v-obs').value
+    });
+    ['v-data','v-origem','v-destino','v-loc-carga','v-loc-dev','v-frete','v-comissao','v-abastecimento','v-litros','v-obs'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('v-empresa').value='';
+    document.getElementById('v-motorista').value='';
+    document.getElementById('v-bug').value='';
+    await renderModalTrips();
+    toast('Viagem adicionada!');
+  }catch(e){toast('Erro ao salvar viagem.',true);}
+  finally{btn.disabled=false; btn.textContent='Adicionar viagem';}
+}
+
+async function renderModalTrips(){
+  if(!currentTruck) return;
+  const el=document.getElementById('modal-trips');
+  el.innerHTML='<div class="loading">Carregando viagens...</div>';
+  try{
+    const viagens=await db('viagens','GET',null,`?caminhao_id=eq.${currentTruck.id}&order=data.asc`)||[];
+    const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
+    const sumComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
+    const sumAb=viagens.reduce((a,v)=>a+(v.abastecimento||0),0);
+    const sumLitros=viagens.reduce((a,v)=>a+(v.litros||0),0);
+    const fmt=n=>'R$ '+n.toFixed(2).replace('.',',');
+    document.getElementById('modal-summary').innerHTML=`
+      <div class="summary-card"><div class="summary-label">Total viagens</div><div class="summary-value">${viagens.length}</div></div>
+      <div class="summary-card"><div class="summary-label">Frete total</div><div class="summary-value" style="font-size:15px">${fmt(sumFrete)}</div></div>
+      <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
+      <div class="summary-card"><div class="summary-label">Abastecimento</div><div class="summary-value" style="font-size:15px">${fmt(sumAb)}</div></div>
+      <div class="summary-card"><div class="summary-label">Litros total</div><div class="summary-value">${sumLitros.toFixed(0)} L</div></div>
+    `;
+    if(!viagens.length){el.innerHTML='<div class="empty">Nenhuma viagem registrada.</div>';return;}
+    el.innerHTML=`<div style="overflow-x:auto"><table class="trip-table">
+      <thead><tr>
+        <th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
+      </tr></thead>
+      <tbody>${viagens.map(v=>`<tr>
+        <td>${v.data||'—'}</td><td>${v.empresa||'—'}</td><td>${v.origem||'—'}</td><td>${v.destino||'—'}</td>
+        <td>${v.loc_carga||'—'}</td><td>${v.loc_dev||'—'}</td><td>${v.container||'—'}</td><td>${v.bug||'—'}</td>
+        <td>${v.motorista||'—'}</td>
+        <td>R$ ${(v.frete||0).toFixed(2).replace('.',',')}</td>
+        <td>R$ ${(v.comissao||0).toFixed(2).replace('.',',')}</td>
+        <td>R$ ${(v.abastecimento||0).toFixed(2).replace('.',',')}</td>
+        <td>${v.litros||0} L</td><td>${v.obs||'—'}</td>
+        <td><button class="btn-danger" onclick="removerViagem('${v.id}')">&#x2715;</button></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  }catch(e){el.innerHTML='<div class="empty">Erro ao carregar viagens.</div>';}
+}
+
+async function removerViagem(id){
+  if(!confirm('Remover esta viagem?')) return;
+  try{
+    await db('viagens','DELETE',null,`?id=eq.${id}`);
+    await renderModalTrips();
+    toast('Viagem removida.');
+  }catch(e){toast('Erro ao remover viagem.',true);}
+}
+
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('form-modal').addEventListener('click',function(e){if(e.target===this)closeFormModal();});
+
+Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]);
+</script>
+</body>
+</html>

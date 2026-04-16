@@ -473,11 +473,15 @@ async function abrirTodosOsCaminhoes(){
     const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
     const sumComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
     const sumAb=viagens.reduce((a,v)=>a+(v.abastecimento||0),0);
+    const sumPedagios=viagens.reduce((a,v)=>a+(v.pedagios||0),0);
+    const sumTotal=sumFrete-sumComissao-sumAb-sumPedagios;
     document.getElementById('frota-summary').innerHTML=`
       <div class="summary-card"><div class="summary-label">Total viagens</div><div class="summary-value">${viagens.length}</div></div>
       <div class="summary-card"><div class="summary-label">Frete total</div><div class="summary-value" style="font-size:15px">${fmt(sumFrete)}</div></div>
-      <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
+      <div class="summary-card"><div class="summary-label">Pedágios</div><div class="summary-value" style="font-size:15px">${fmt(sumPedagios)}</div></div>
       <div class="summary-card"><div class="summary-label">Abastecimento</div><div class="summary-value" style="font-size:15px">${fmt(sumAb)}</div></div>
+      <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
+      <div class="summary-card"><div class="summary-label">Total</div><div class="summary-value" style="font-size:15px;color:#C8171A">${fmt(sumTotal)}</div></div>
     `;
     if(!viagens.length){el.innerHTML='<div class="empty" style="padding:1.5rem 0">Nenhuma viagem registrada.</div>';return;}
     const placas={};
@@ -875,12 +879,16 @@ async function renderModalTrips(){
     const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
     const sumComissao=viagens.reduce((a,v)=>a+(v.comissao||0),0);
     const sumAb=viagens.reduce((a,v)=>a+(v.abastecimento||0),0);
+    const sumPedagios=viagens.reduce((a,v)=>a+(v.pedagios||0),0);
+    const sumTotal=sumFrete-sumComissao-sumAb-sumPedagios;
     const fmt=n=>'R$ '+n.toFixed(2).replace('.',',');
     document.getElementById('frota-summary').innerHTML=`
       <div class="summary-card"><div class="summary-label">Total viagens</div><div class="summary-value">${viagens.length}</div></div>
       <div class="summary-card"><div class="summary-label">Frete total</div><div class="summary-value" style="font-size:15px">${fmt(sumFrete)}</div></div>
-      <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
+      <div class="summary-card"><div class="summary-label">Pedágios</div><div class="summary-value" style="font-size:15px">${fmt(sumPedagios)}</div></div>
       <div class="summary-card"><div class="summary-label">Abastecimento</div><div class="summary-value" style="font-size:15px">${fmt(sumAb)}</div></div>
+      <div class="summary-card"><div class="summary-label">Comissões</div><div class="summary-value" style="font-size:15px">${fmt(sumComissao)}</div></div>
+      <div class="summary-card"><div class="summary-label">Total</div><div class="summary-value" style="font-size:15px;color:#C8171A">${fmt(sumTotal)}</div></div>
     `;
     if(!viagens.length){el.innerHTML='<div class="empty" style="padding:1.5rem 0">Nenhuma viagem registrada.</div>';return;}
     el.innerHTML=`<div class="table-scroll"><table class="trip-table">

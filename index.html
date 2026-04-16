@@ -62,6 +62,9 @@ body.dark .marca-opt.selected{border-color:#e04548;background:#2a1515;color:#e04
 .trip-table{width:100%;border-collapse:collapse;font-size:12px}
 .trip-table th{text-align:left;padding:7px 9px;background:#f5f4f0;color:#888;font-weight:600;font-size:11px;white-space:nowrap;border-bottom:1px solid #e8e5de}
 .trip-table td{padding:8px 9px;border-bottom:1px solid #f0ede5;vertical-align:top;white-space:nowrap}
+.table-scroll{overflow-x:auto;margin:0 -1.5rem;padding:0 1.5rem}
+.table-scroll::-webkit-scrollbar{height:0;width:0}
+.table-scroll{scrollbar-width:none;-ms-overflow-style:none}
 .trip-table tr:last-child td{border-bottom:none}
 .trip-table tr:hover td{background:#faf9f6}
 .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem}
@@ -816,7 +819,7 @@ async function renderModalTrips(){
       <div class="summary-card"><div class="summary-label">Litros total</div><div class="summary-value">${sumLitros.toFixed(0)} L</div></div>
     `;
     if(!viagens.length){el.innerHTML='<div class="empty">Nenhuma viagem registrada.</div>';return;}
-    el.innerHTML=`<div style="overflow-x:auto;margin:0 -1.5rem;padding:0 1.5rem"><table class="trip-table">
+    el.innerHTML=`<div class="table-scroll"><table class="trip-table">
       <thead><tr>
         <th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
       </tr></thead>
@@ -904,7 +907,7 @@ async function loadTodasViagens(){
     const fmt=n=>'R$ '+(n||0).toFixed(2).replace('.',',');
     const placas={};
     cache.caminhoes.forEach(c=>placas[c.id]=c.placa);
-    el.innerHTML=`<div style="overflow-x:auto"><table class="trip-table">
+    el.innerHTML=`<div class="table-scroll"><table class="trip-table">
       <thead><tr>
         <th>Caminhão</th><th>Data</th><th>Empresa</th><th>Origem</th><th>Destino</th><th>L. Carga</th><th>L. Devolução</th><th>Container</th><th>Bug/Carreta</th><th>Motorista</th><th>Frete</th><th>Comissão</th><th>Abastec.</th><th>Litros</th><th>Obs.</th><th></th>
       </tr></thead>

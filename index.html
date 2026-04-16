@@ -126,7 +126,7 @@ body.dark .nav-btn{color:#888}
 body.dark .nav-btn:hover{color:#e8e6e0;background:#252628}
 body.dark .nav-btn.active{color:#e8e6e0;border-bottom-color:#e04548}
 body.dark .field input,body.dark .field select,body.dark .field textarea{background:#252628;border-color:#3a3b3e;color:#e8e6e0}
-body.dark #filtro-de,body.dark #filtro-ate{background:#252628;border-color:#3a3b3e;color:#e8e6e0}
+body.dark #filtro-de,body.dark #filtro-ate,body.dark #filtro-motorista{background:#252628;border-color:#3a3b3e;color:#e8e6e0}
 body.dark .field input:focus,body.dark .field select:focus,body.dark .field textarea:focus{border-color:#e04548}
 body.dark .field label{color:#999}
 body.dark .list-item{border-bottom-color:#2e2f31}
@@ -179,6 +179,21 @@ body.dark .subtitle{color:#888}
       <div id="login-erro" style="color:#a32d2d;font-size:12px;display:none">Senha incorreta.</div>
       <button onclick="verificarSenha()" style="padding:10px;background:#C8171A;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">Entrar</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL NOTIFICAÇÕES DE VENCIMENTO -->
+<div class="modal-bg" id="notif-modal" style="display:none;z-index:10001">
+  <div class="modal" style="max-width:480px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:20px">⚠️</span>
+        <span style="font-size:16px;font-weight:700">Documentos a vencer</span>
+      </div>
+      <button class="close-btn" onclick="document.getElementById('notif-modal').style.display='none'">&#x2715;</button>
+    </div>
+    <div id="notif-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button class="btn-primary" style="margin-top:1rem;width:100%" onclick="document.getElementById('notif-modal').style.display='none'">Entendido</button>
   </div>
 </div>
 
@@ -239,6 +254,9 @@ body.dark .subtitle{color:#888}
             <input type="date" id="filtro-de" onchange="aplicarFiltro()" style="padding:3px 6px;border:1px solid #ddd;border-radius:6px;font-size:11px;font-family:inherit;background:#fff;color:#1a1a1a;width:120px" />
             <span style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">Até</span>
             <input type="date" id="filtro-ate" onchange="aplicarFiltro()" style="padding:3px 6px;border:1px solid #ddd;border-radius:6px;font-size:11px;font-family:inherit;background:#fff;color:#1a1a1a;width:120px" />
+            <select id="filtro-motorista" onchange="aplicarFiltro()" style="padding:3px 6px;border:1px solid #ddd;border-radius:6px;font-size:11px;font-family:inherit;background:#fff;color:#1a1a1a;max-width:140px">
+              <option value="">Todos motoristas</option>
+            </select>
             <button onclick="resetarFiltroMes()" style="padding:3px 10px;border:1px solid #ddd;border-radius:6px;font-size:11px;background:none;cursor:pointer;color:#888;white-space:nowrap">Mês atual</button>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
@@ -333,6 +351,9 @@ body.dark .subtitle{color:#888}
         <div class="field"><label>Renavam</label><input id="c-renavam" placeholder="00000000000" /></div>
         <div class="field"><label>ANTT</label><input id="c-antt" placeholder="RNTRC 000000" /></div>
       </div>
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Vencimento CRLV</label><input type="date" id="c-venc-crlv" /></div>
+      </div>
       <button class="btn-primary" id="btn-salvar-caminhao" onclick="salvarCaminhao()">Salvar caminhão</button>
     </div>
     <div id="form-motorista" style="display:none">
@@ -351,8 +372,9 @@ body.dark .subtitle{color:#888}
             <div class="field"><label>Telefone</label><input id="m-tel" placeholder="(11) 99999-0000" /></div>
             <div class="field"><label>Data de nascimento</label><input type="date" id="m-nasc" /></div>
           </div>
-          <div class="field" style="max-width:50%">
-            <label>Data de início</label><input type="date" id="m-inicio" />
+          <div class="grid2">
+            <div class="field"><label>Data de início</label><input type="date" id="m-inicio" /></div>
+            <div class="field"><label>Vencimento CNH</label><input type="date" id="m-venc-cnh" /></div>
           </div>
         </div>
       </div>
@@ -588,9 +610,11 @@ async function abrirTodosOsCaminhoes(){
   document.querySelector('#frota-painel .btn-primary').style.display='none';
   const de=document.getElementById('filtro-de').value;
   const ate=document.getElementById('filtro-ate').value;
+  const mot=document.getElementById('filtro-motorista').value;
   let query='?order=data.desc';
   if(de) query+=`&data=gte.${de}`;
   if(ate) query+=`&data=lte.${ate}`;
+  if(mot) query+=`&motorista=eq.${encodeURIComponent(mot)}`;
   const el=document.getElementById('frota-trips');
   el.innerHTML='<div class="loading">Carregando viagens...</div>';
   try{
@@ -677,6 +701,7 @@ function editarCaminhao(id){
   document.getElementById('c-ano').value=c.ano||'';
   document.getElementById('c-renavam').value=c.renavam||'';
   document.getElementById('c-antt').value=c.antt||'';
+  document.getElementById('c-venc-crlv').value=c.venc_crlv||'';
   document.getElementById('c-marca').value=c.marca||'';
   document.querySelectorAll('.marca-opt').forEach(o=>{
     o.classList.toggle('selected', o.dataset.marca===(c.marca||''));
@@ -701,7 +726,8 @@ async function salvarCaminhao(){
     cor:document.getElementById('c-cor').value.trim(),
     ano:document.getElementById('c-ano').value.trim(),
     renavam:document.getElementById('c-renavam').value.trim(),
-    antt:document.getElementById('c-antt').value.trim()
+    antt:document.getElementById('c-antt').value.trim(),
+    venc_crlv:document.getElementById('c-venc-crlv').value||null
   };
   try{
     if(editandoCaminhaoId){
@@ -737,9 +763,18 @@ async function loadMotoristas(){
   }catch(e){toast('Erro ao carregar motoristas',true);}
 }
 
+function popularFiltroMotorista(){
+  const sel=document.getElementById('filtro-motorista');
+  if(!sel) return;
+  const val=sel.value;
+  sel.innerHTML='<option value="">Todos motoristas</option>'+
+    cache.motoristas.map(m=>`<option value="${m.nome}"${m.nome===val?' selected':''}>${m.nome}</option>`).join('');
+}
+
 function renderMotoristas(){
   const el=document.getElementById('lista-motoristas');
   const arr=cache.motoristas;
+  popularFiltroMotorista();
   if(!arr.length){el.innerHTML='<div class="empty">Nenhum cadastrado.</div>';return;}
   el.innerHTML=arr.map(m=>`
     <div class="list-item">
@@ -771,6 +806,7 @@ function editarMotorista(id){
   document.getElementById('m-tel').value=m.tel||'';
   document.getElementById('m-nasc').value=m.nasc||'';
   document.getElementById('m-inicio').value=m.inicio||'';
+  document.getElementById('m-venc-cnh').value=m.venc_cnh||'';
   const preview=document.getElementById('m-foto-preview');
   preview.innerHTML=m.foto?`<img src="${m.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`:'👤';
   document.getElementById('form-modal-title').textContent='Editar motorista';
@@ -814,6 +850,7 @@ async function salvarMotorista(){
     tel:document.getElementById('m-tel').value.trim(),
     nasc:document.getElementById('m-nasc').value||null,
     inicio:document.getElementById('m-inicio').value||null,
+    venc_cnh:document.getElementById('m-venc-cnh').value||null,
     foto
   };
   try{
@@ -825,7 +862,7 @@ async function salvarMotorista(){
       await db('motoristas','POST',body);
       toast('Motorista salvo!');
     }
-    ['m-nome','m-cpf','m-tel','m-nasc','m-inicio'].forEach(f=>document.getElementById(f).value='');
+    ['m-nome','m-cpf','m-tel','m-nasc','m-inicio','m-venc-cnh'].forEach(f=>document.getElementById(f).value='');
     fotoInput.value='';
     document.getElementById('m-foto-preview').innerHTML='👤';
     await loadMotoristas();
@@ -1075,9 +1112,11 @@ async function renderModalTrips(){
   try{
     const de=document.getElementById('filtro-de').value;
     const ate=document.getElementById('filtro-ate').value;
+    const mot=document.getElementById('filtro-motorista').value;
     let q=`?caminhao_id=eq.${currentTruck.id}&order=data.desc`;
     if(de) q+=`&data=gte.${de}`;
     if(ate) q+=`&data=lte.${ate}`;
+    if(mot) q+=`&motorista=eq.${encodeURIComponent(mot)}`;
     const viagens=await db('viagens','GET',null,q)||[];
     window._viagensCache=viagens;
     const sumFrete=viagens.reduce((a,v)=>a+(v.frete||0),0);
@@ -1229,6 +1268,7 @@ Promise.all([loadCaminhoes(),loadMotoristas(),loadEmpresas(),loadCarretas()]).th
   const navBtn=document.querySelector(`.nav-btn[onclick*="'${savedTab}'"]`);
   showTab(savedTab,navBtn);
   if(savedTab==='caminhoes') abrirTodosOsCaminhoes();
+  verificarVencimentos();
 });
 setInterval(syncSilencioso, 5000);
 
@@ -1278,6 +1318,37 @@ toggleComissaoAuto(document.getElementById('v-comissao-auto'));
 })();
 
 const SENHA_CORRETA = 'fstgobccrb';
+
+function verificarVencimentos(){
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const limite=new Date(hoje); limite.setDate(limite.getDate()+30);
+  const alertas=[];
+  cache.motoristas.forEach(m=>{
+    if(m.venc_cnh){
+      const d=new Date(m.venc_cnh+'T00:00:00');
+      if(d<=limite){
+        const diff=Math.ceil((d-hoje)/(1000*60*60*24));
+        const txt=diff<0?'CNH VENCIDA':'CNH vence em '+diff+' dia'+(diff!==1?'s':'');
+        alertas.push({tipo:diff<0?'danger':'warn',msg:`<strong>${m.nome}</strong> — ${txt} (${fmtDataBR(m.venc_cnh)})`});
+      }
+    }
+  });
+  cache.caminhoes.forEach(c=>{
+    if(c.venc_crlv){
+      const d=new Date(c.venc_crlv+'T00:00:00');
+      if(d<=limite){
+        const diff=Math.ceil((d-hoje)/(1000*60*60*24));
+        const txt=diff<0?'CRLV VENCIDO':'CRLV vence em '+diff+' dia'+(diff!==1?'s':'');
+        alertas.push({tipo:diff<0?'danger':'warn',msg:`<strong>${c.placa}</strong> — ${txt} (${fmtDataBR(c.venc_crlv)})`});
+      }
+    }
+  });
+  if(!alertas.length) return;
+  document.getElementById('notif-lista').innerHTML=alertas.map(a=>`
+    <div style="padding:10px 14px;border-radius:8px;font-size:13px;background:${a.tipo==='danger'?'#fdecea':'#fff8e1'};border-left:4px solid ${a.tipo==='danger'?'#C8171A':'#f59e0b'};color:${a.tipo==='danger'?'#8b1a1a':'#7a5500'}">${a.msg}</div>
+  `).join('');
+  document.getElementById('notif-modal').style.display='flex';
+}
 
 function verificarSenha(){
   const val = document.getElementById('login-input').value;

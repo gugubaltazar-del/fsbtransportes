@@ -723,7 +723,7 @@ function renderMotoristas(){
         <div>
           <div style="font-weight:500">${m.nome}</div>
           <div style="font-size:11px;color:#888">${[m.cpf,m.tel].filter(Boolean).join(' · ')}</div>
-          <div style="font-size:11px;color:#aaa">${[m.nasc?'Nasc: '+fmtDataBR(m.nasc):'',m.inicio?'Início: '+fmtDataBR(m.inicio):''].filter(Boolean).join(' · ')}</div>
+          <div style="font-size:11px;color:#aaa">${[m.nasc?'Nasc: '+fmtDataBR(String(m.nasc)):'',m.inicio?'Início: '+fmtDataBR(String(m.inicio)):''].filter(Boolean).join(' · ')}</div>
         </div>
       </div>
       <div style="display:flex;gap:6px">
